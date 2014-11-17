@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Language Family Map</title>
+        <style>
+            body {
+                font-family: Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+                text-align: center;
+            }
+
+            .langBubble {
+                cursor: pointer;
+                transition: all 0.5s ease;
+            }
+
+            .langBubble:hover {
+                opacity: .85;
+            }
+
+            .overlay {
+                position: fixed;
+                top: 0px;
+                left: 0px;
+                width: 100%;
+                height: 100%;
+                z-index: 100;
+                background-color: black;
+            }
+
+            .langInfoBox {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                z-index: 1000;
+                border-radius: 10px;
+                padding: 15px;
+                background-color: white;
+                box-shadow: 0 5px 15px rgba(0,0,0,.5);
+            }
+
+            .closeButton {
+                position: absolute;
+                top: .5em;
+                left: 95%;
+                font-size: 2em;
+                cursor: pointer;
+            }
+
+            .rightButton {
+                position: absolute;
+                left: 95%;
+                top: 50%;
+                font-size: 3.5em;
+                cursor: pointer;
+                margin-bottom: -3.5em;
+            }
+
+            .leftButton {
+                position: absolute;
+                right: 95%;
+                top: 50%;
+                font-size: 3.5em;
+                cursor: pointer;
+                margin-bottom: -3.5em;
+            }
+
+            .backButton {
+                position: absolute;
+                right: 90%;
+                bottom: .5em;
+                font-size: 1.5em;
+                cursor: pointer;
+                width: 3em;
+                font-weight: bold;
+            }
+
+            .arc path {
+                stroke: whitesmoke;
+                stroke-width: 3px;
+            }
+
+            a {
+                color: #dd4814;
+                text-decoration: none;
+            }
+
+            a:hover {
+                color: #dd4814;
+                text-decoration: underline;
+            }
+
+            .chartPreview {
+                display: inline-block;
+                box-shadow: 0 4px 12px rgba(0,0,0,.5);
+                border-radius: 10px;
+                margin: 5px;
+                cursor: pointer;
+                transition: all 0.5s ease;
+            }
+
+            .chartPreview:hover {
+                background-color: whitesmoke;
+            }
+
+            .disabled {
+                color: gray;
+            }
+
+            .langPairNode {
+                cursor: pointer;
+            }
+        </style>
+
+        <script src="./d3.min.js" type="text/javascript"></script>
+        <script src="./colorbrewer.js" type="text/javascript"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" type="text/javascript"></script>
+    </head>
+    <body>
+        <script type="text/javascript">
+            var nativeNames = false,
+                svnRoot = "https://svn.code.sf.net/p/apertium/svn/";
+
+            var pairs = [
+                {"langs": ["tur", "aze"], "location": "nursery", "stems": 8194},
+                {"langs": ["tuk", "tur"], "location": "nursery", "stems": 3387},
+                {"langs": ["tur", "uzb"], "location": "nursery", "stems": 1967},
+                {"langs": ["tur", "kir"], "location": "nursery", "stems": 7106},
+                {"langs": ["tur", "tat"], "location": "nursery", "stems": 213},
+                {"langs": ["chv", "tur"], "location": "incubator", "stems": 8172},
+                {"langs": ["kir", "uzb"], "location": "incubator", "stems": 17},
+                {"langs": ["kaz", "kir"], "location": "nursery", "stems": 7556},
+                {"langs": ["tat", "kir"], "location": "incubator", "stems": 10},
+                {"langs": ["chv", "tat"], "location": "incubator", "stems": 198},
+                {"langs": ["kaz", "tat"], "location": "trunk", "stems": 9919},
+                {"langs": ["nog", "kaz"], "location": "incubator", "stems": 9},
+                {"langs": ["tat", "bak"], "location": "nursery", "stems": 2941},
+                {"langs": ["kaz", "kaa"], "location": "incubator", "stems": 4978},
+                {"langs": ["kaz", "kum"], "location": "nursery", "stems": 511},
+                {"langs": ["kaz", "uig"], "location": "incubator", "stems": 2728},
+            ];
+
+            var externalPairs = [
+                {"langs": ["tur", "eng"], "location": "incubator", "stems": 171},
+                {"langs": ["kaz", "eng"], "location": "incubator", "stems": 7522},
+                {"langs": ["epo", "tur"], "location": "incubator", "stems": 1500},
+                {"langs": ["khk", "kaz"], "location": "incubator", "stems": 134},
+                {"langs": ["tat", "rus"], "location": "incubator", "stems": 5992},
+                {"langs": ["chv", "rus"], "location": "incubator", "stems": 75}
+            ];
+
+            var udhrText = {
+                "kaz": "Барлық адамдар тумысынан азат және қадір‐қасиеті мен кұқықтары тең болып дүниеге келеді. Адамдарға ақыл‐парасат, ар‐ождан берілген, сондықтан олар бір‐бірімен туыстық, бауырмалдық қарым‐қатынас жасаулары тиіс.",
+                "tat": "Барлык кешеләр дә азат һәм үз абруйлары һәм хокуклары ягыннан тиң булып туалар. Аларга акыл һәм вөҗдан бирелгән һәм бер-берсенә карата туганнарча мөнәсәбәттә булырга тиешләр.",
+                "kir": "Бардык адамдар өз беделинде жана укуктарында эркин жана тең укуктуу болуп жаралат. Алардын аң‐сезими менен абийири бар жана бири‐бирине бир туугандык мамилекылууга тийиш.",
+                "tur": "Bütün insanlar hür, haysiyet ve haklar bakımından eşit doğarlar. Akıl ve vicdana sahiptirler ve birbirlerine karşı kardeşlik zihniyeti ile hareket etmelidirler.",
+                "aze": "Bütün insanlar ləyaqət və hüquqlarına görə azad və bərabər doğulurlar. Onların şüurları və vicdanları var və bir-birlərinə münasibətdə qardaşlıq ruhunda davranmalıdırlar.",
+                "tuk": "Adamlaryň hemmesi azat dogulýarlar we öz mertebesi hem-de hukuklary boýunça ilkibaşdan deňdirler. Olara ozal-başdan aň, ynsap berlendir we biri-birine özara doganlyk ruhunda çemeleşmek olaryň ýaraşygydyr.",
+                "uig": "ھەممە ئادەم زاتىدىنلا ئەركىن، ئىززەت-ھۆرمەت ۋە ھوقۇقتا بابباراۋەر بولۇپ تۇغۇلغان. ئۇلار ئەقىلغە ۋە ۋىجدانغا ئىگە ھەمدە بىر-بىرىگە قېرىنداشلىق مۇناسىۋىتىگە خاس روھ بىلەن مۇئامىلە قىلىشى كېرەك.",
+                "kjh": "Полған на кізі пос паза тиң тіріпче паза тиң постың синін пілінгенін паза тірелерініңде полча. Олардың сағынғаны паза арығ сағыс пар паза харындастар чіли тудынарға киректер.",
+                "sah": "Дьон барыта бэйэ суолтатыгар уонна быраабыгар тэҥ буолан төрүүллэр. Кинилэр бары өркөн өйдөөх, суобастаах буолан төрүүллэр, уонна бэйэ бэйэлэригэр тылга кииринигэс быһыылара доҕордоһуу тыыннаах буолуохтаах.",
+                "tyv": "Бүгү кижилер хостуг база мөзүзү болгаш эргелери дең кылдыр төрүттүнер. Оларга угаансарыыл болгаш арын-нүүр бердинген болур болгаш олар бот-боттарынга акы-дуңмалышкы хамаарылганы көргүзер ужурлуг.",
+                "uzb": "Barcha odamlar erkin, qadr-qimmat ba huquqlarda tang bo'lib tug'iladilar. Ular aql va vijdon sohibidilar va bir-birla iga birodarlarcha muomala qilishlari zarur.",
+                "crh": "Bütün insanlar ür, sayğı ve uquqlar itibarı ile musaviy doğalar. Aqıl ve vicdanğa saipler ve bir-birlerine qarşı ağa-qardaşlıq fikirnen areket etmelidirler.",
+                "bak": "Барлыҡ кешеләр ирекле, дәрәжәләре һәм хоҡуҡтары тигеҙ булып тыуалар. Улар аҡыл һәм выждан эйәһе һәм бер-береһенә ҡарата ҡәрҙәшлек рухында хәрәкәт итергә тейештәр."
+            };
+
+            var transducers = [
+                {"lang": "kaz", "state": "production", "stems": 14249, "coverage": 92.1, "location": "apertium-kaz (languages)", authors: "Ilnar, Jonathan, Fran, Nathan", contributors: [{"user":"aida27","value":144},{"user":"abdik","value":8},{"user":"jonorthwash","value":161},{"user":"spectre360","value":94},{"user":"selimcan","value":679},{"user":"aidana1","value":13},{"user":"unhammer","value":13},{"user":"zhenisbek","value":6},{"user":"inariksit","value":1},{"user":"mlforcada","value":2},{"user":"moshagen","value":1},{"user":"kantoro","value":28},{"user":"trondtr","value":3},{"user":"aizhan","value":1}]},
+                {"lang": "tat", "state": "production", "stems": 12086, "coverage": 91, "location": "apertium-tat (languages)", authors: "Ilnar, Fran, Jonathan, Röstäm", contributors: [{"user":"selimcan","value":672},{"user":"trondtr","value":2},{"user":"unhammer","value":14},{"user":"spectre360","value":36},{"user":"abdik","value":1},{"user":"jonorthwash","value":89},{"user":"aglimzan","value":4}]},
+                {"lang": "kir", "state": "working", "stems": 13775, "coverage": 90, "location": "apertium-kir (languages)", authors: "Jonathan, Mirlan, Fran, Qantörö", contributors: [{"user":"jonorthwash","value":276},{"user":"unhammer","value":11},{"user":"spectre360","value":88},{"user":"kantoro","value":50}]},
+                {"lang": "tur", "state": "working", "stems": 11417, "coverage": 87.3, "location": "apertium-tur (languages)", authors: "Fran, Gianluca, Jonathan", contributors: [{"user":"trondtr","value":1},{"user":"unhammer","value":6},{"user":"jonorthwash","value":206},{"user":"spectre360","value":386},{"user":"zfe","value":215},{"user":"aglimzan","value":4},{"user":"hectoralos","value":1},{"user":"cristipiticul","value":1},{"user":"yatezcan","value":1}]},
+                {"lang": "chv", "state": "development", "stems": 10276, "coverage": 85, "location": "apertium-chv (languages)", authors: "Hèctor", contributors: [{"user":"unhammer","value":12},{"user":"spectre360","value":31},{"user":"jonorthwash","value":4}]},
+                {"lang": "kum", "state": "development", "stems": 4895, "coverage": 90.2, "location": "apertium-kum (languages)", authors: "Fran, Jonathan", contributors: [{"user":"spectre360","value":133},{"user":"jonorthwash","value":78},{"user":"unhammer","value":10}]},
+                {"lang": "kaa", "state": "development", "stems": 5378, "coverage": 80.6, "location": "apertium-kaa (languages)", authors: "Beknazar, Fran, Jonathan", contributors: [{"user":"abdik","value":71},{"user":"spectre360","value":83},{"user":"jonorthwash","value":67},{"user":"unhammer","value":6}]},
+                {"lang": "uzb", "state": "development", "stems": 3957, "coverage": 82.9, "location": "apertium-uzb (languages)", authors: "", contributors: [{"user":"unhammer","value":10},{"user":"kantoro","value":4},{"user":"spectre360","value":22},{"user":"zfe","value":1}]},
+                {"lang": "bak", "state": "development", "stems": 2827, "coverage": 66, "location": "apertium-bak (languages)", authors: "Fran, Jonathan, Ilnar, Milli", contributors: [{"user":"unhammer","value":11},{"user":"spectre360","value":5}]},
+                {"lang": "nog", "state": "development", "stems": 1385, "coverage": 81.4, "location": "apertium-nog (languages)", authors: "Fran, Jonathan", contributors: [{"user":"unhammer","value":10},{"user":"spectre360","value":90},{"user":"jonorthwash","value":43}]},
+                {"lang": "tuk", "state": "development", "stems": 2988, "coverage": 70.7, "location": "apertium-tuk (languages)", authors: "Fran", contributors: [{"user":"unhammer","value":10},{"user":"spectre360","value":3}]},
+                {"lang": "uig", "state": "prototype", "stems": 1761, "coverage": 54.2, "location": "apertium-uig (incubator)", authors: "Jonathan, Märdan, Fran", contributors: [{"user":"unhammer","value":1},{"user":"jonorthwash","value":36},{"user":"spectre360","value":19}]},
+                {"lang": "crh", "state": "prototype", "stems": 681, "coverage": 46.7, "location": "apertium-crh (incubator)", authors: "Fran", contributors: [{"user":"spectre360","value":8}]},
+                {"lang": "sah", "state": "prototype", "stems": 806, "coverage": 35.9, "location": "apertium-sah (incubator)", authors: "Fran", contributors: [{"user":"spectre360","value":8}]},
+                {"lang": "tyv", "state": "prototype", "stems": 168, "coverage": 31.2, "location": "apertium-tyv (incubator)", authors: "Fran", contributors: [{"user":"spectre360","value":16}]},
+                {"lang": "kjh", "state": "prototype", "stems": 161, "coverage": 35.5, "location": "apertium-kjh (incubator)", authors: "Fran", contributors: [{"user":"spectre360","value":7}]},
+                {"lang": "aze", "state": "prototype", "stems": 11120, "coverage": 0, "location": "apertium-aze (incubator)", authors: "Gianluca", contributors: [{"user":"unhammer","value":5},{"user":"spectre360","value":5},{"user":"selimcan","value":1}]}
+            ];
+
+            var langNames = {
+                "kaz": ["Kazakh", "қазақ тілі"],
+                "tat": ["Tatar", "татар теле"],
+                "kir": ["Kyrgyz", "кыргыз тили"],
+                "tur": ["Turkish", "Türk dili"],
+                "chv": ["Chuvash", "чӑваш чӗлхи"],
+                "kum": ["Kumyk", "къумукъ тил"],
+                "kaa": ["Karakalpak", "Qaraqalpaq tili"],
+                "uzb": ["Uzbek", "o'zbek tili"],
+                "bak": ["Bashkir", "башҡорт теле"],
+                "nog": ["Nogay", "Ногай тили"],
+                "tuk": ["Turkmen", "Türkmençe"],
+                "uig": ["Uyghur", "ئۇيغۇر تىلى"],
+                "crh": ["Crimean Tatar", "Qırımtatar tili"],
+                "sah": ["Yakut", "Саха тыла"],
+                "tyv": ["Tuvan", "Тыва дыл"],
+                "kjh": ["Khakas", "Хакас тілі"],
+                "aze": ["Azerbaijani", "Azərbaycan dili"]
+            };
+
+            var states = ["prototype", "development", "working", "production"];
+            var locations = ["incubator", "nursery", "staging", "trunk"];
+
+            function codeToName(code, native) {
+                return langNames[code][native ? 1 : 0];
+            }
+
+            function createChart() {
+                var diameter = Math.min($(document).width(), $(document).height()) - 20,
+                    format = d3.format(",d");
+
+                var color = d3.scale.ordinal()
+                    .domain(states)
+                    .range(colorbrewer["Oranges"][states.length]);
+
+                var bubble = d3.layout.pack()
+                    .sort(d3.ascending)
+                    .size([diameter, diameter])
+                    .padding(20);
+
+                var svg = d3.select("body")
+                    .append("svg")
+                        .attr("id", "bubbleChart")
+                        .attr("width", diameter)
+                        .attr("height", diameter);
+
+                var node = svg.selectAll(".langBubble")
+                    .data(bubble.nodes({"children": transducers.map(function (d) { d.value = d.stems; return d; })}).filter(function(d) { return !d.children; }))
+                    .enter()
+                    .append("g")
+                        .attr("class", "langBubble")
+                        .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+                node.append("title")
+                    .text(function (d) { return d.location; });
+
+                node.append("circle")
+                    .attr("r", function (d) { return d.r; })
+                    .style("fill", function (d) { return color(d.state); });
+
+                var g = node.append("g")
+                    .attr("transform", function (d) { return "translate(-" + d.r + ",-" + d.r + ")"; });
+
+                var langDetails = g.append("foreignObject")
+                    .attr("width", function (d) { return 2 * d.r })
+                    .attr("height", function (d) { return 2 * d.r })
+                    .append("xhtml:body")
+                        .style("height", "100%")
+                        .style("margin", "0")
+                        .append("div")
+                            .style("text-align", "center")
+                            .append("div")
+                                .attr("class", "langDetails");
+
+                langDetails.append("div")
+                    .attr("class", "langName")
+                    .style("font-size", function (d) { return Math.max(.5, d.r / 40) + "em"; })
+                    .text(function (d) { return codeToName(d.lang, nativeNames); })
+
+                langDetails.append("div")
+                    .style("font-size", function (d) { return Math.max(.5, d.r / 70) + "em"; })
+                    .text(function (d) { return format(d.stems); });
+
+                langDetails.style("padding-top", function (d) { return (d.r * 2 - $(this).height()) / 2 + "px"; });
+
+                node.on("click", function () {
+                    var langData = this.__data__;
+
+                    var langInfoBox = d3.select("body").append("div")
+                        .attr("class", "langInfoBox")
+                        .style({
+                            "width": diameter + "px",
+                            "height": (diameter * 5 / 6) + "px",
+                            "margin-left": - diameter / 2 + "px",
+                            "margin-top": (- diameter / 2 + diameter / 9) + "px",
+                            "opacity": 0
+                        });
+
+                    d3.select("body").append("div")
+                        .style("opacity", 0)
+                        .attr("class", "overlay")
+                        .on("click", closeLangInfoBox)
+                        .transition()
+                            .duration(600)
+                            .delay(25)
+                            .style("opacity", .85);
+
+                    langInfoBox.transition()
+                        .duration(800)
+                        .style("opacity", 1);
+
+                    var langInfoBoxTitle = langInfoBox.append("h1")
+                        .style("margin-top", "5px")
+                        .text(codeToName(langData.lang, false) + "/" + codeToName(langData.lang, true));
+
+                    langInfoBox.append("span")
+                        .html("&times;")
+                        .attr("class", "closeButton")
+                        .on("click", closeLangInfoBox);
+
+                    var udhrExcerpt = langInfoBox.append("p")
+                        .text(udhrText[langData.lang]);
+
+                    var height = (diameter * 5 / 6 - $(langInfoBoxTitle[0]).height() - $(udhrExcerpt[0]).height() - 60) / 2,
+                        width = (diameter - 25) / 2;
+
+                    var currentChartNum, currentChart, buttons;
+                    var chartPreviews = drawChartPreviews();
+
+                    var chartFunctions = {
+                        1: function () { return drawContributionsDonut(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, 10, 130, "1.5em", "1.5em", "1.17em", true, true); },
+                        2: function () { return drawPairGraph(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, "1.75em", [25, 70], [10, 35], true); },
+                        3: function () { alert("Coming soon!"); },
+                        4: function () { alert("Coming soon!"); }
+                    };
+
+                    function drawChartPreviews() {
+                        var chartPreviews = langInfoBox.selectAll(".chartPreview")
+                            .data([1, 2, 3, 4])
+                            .enter()
+                            .append("div")
+                                .attr("class", "chartPreview")
+                                .style({
+                                    "height": height + "px",
+                                    "width": width + "px",
+                                    "float": function (d) { return d % 2 == 0 ? "right" : "left"; },
+                                    "opacity": 0
+                                })
+                                .on("click", function () {
+                                    currentChartNum = this.__data__;
+                                    $(chartPreviews[0]).fadeOut('fast').remove();
+                                    $(udhrExcerpt[0]).fadeOut('fast', function () {
+                                        currentChart = chartFunctions[currentChartNum].call();
+                                        buttons = drawNavigationButtons();
+                                    });
+                                });
+
+                        chartPreviews.transition()
+                            .style("opacity", 1);
+
+                        drawContributionsDonut(d3.select(chartPreviews[0][0]), width - 15, height - 15, 10, 65, "1em", ".9em", ".85em");
+                        drawPairGraph(d3.select(chartPreviews[0][1]), width - 15, height - 15, "1em", [5, 30], [5, 15]);
+
+                        return chartPreviews;
+                    }
+
+                    function drawNavigationButtons() {
+                        var rightButton = langInfoBox.append("span")
+                            .html("&rsaquo;")
+                            .attr("class", "navigButton rightButton" + (currentChartNum === 4 ? " disabled" : ""))
+                            .on("click", function () {
+                                if(!$(this).hasClass("disabled"))
+                                    currentChart.transition()
+                                        .style("opacity", 0)
+                                        .remove()
+                                        .each("end", function () {
+                                            currentChartNum++;
+                                            currentChart = chartFunctions[currentChartNum].call();
+                                            correctButtonStatus();
+                                        });
+                            });
+
+                        var leftButton = langInfoBox.append("span")
+                            .html("&lsaquo;")
+                            .attr("class", "navigButton leftButton" + (currentChartNum === 1 ? " disabled" : ""))
+                            .on("click", function () {
+                                if(!$(this).hasClass("disabled"))
+                                    currentChart.transition()
+                                        .style("opacity", 0)
+                                        .remove()
+                                        .each("end", function () {
+                                            currentChartNum--;
+                                            currentChart = chartFunctions[currentChartNum].call();
+                                            correctButtonStatus();
+                                        });
+                            });
+
+                        var backButton = langInfoBox.append("span")
+                            .html("&laquo; Back")
+                            .attr("class", "navigButton backButton")
+                            .on("click", function () {
+                                $(buttons).fadeOut('fast');
+                                currentChart.transition()
+                                    .style("opacity", 0)
+                                    .remove()
+                                    .each("end", function () {
+                                        $(udhrExcerpt[0]).fadeIn();
+                                        drawChartPreviews();
+                                    });
+                            });
+
+                        function correctButtonStatus() {
+                            switch(currentChartNum) {
+                                case 1:
+                                    $(leftButton[0][0]).addClass("disabled");
+                                    $(rightButton[0][0]).removeClass("disabled");
+                                    break;
+                                case 2:
+                                    $([leftButton[0][0], rightButton[0][0]]).removeClass("disabled");
+                                    break;
+                                case 3:
+                                    $([leftButton[0][0], rightButton[0][0]]).removeClass("disabled");
+                                    break;
+                                case 4:
+                                    $(leftButton[0][0]).removeClass("disabled");
+                                    $(rightButton[0][0]).addClass("disabled");
+                                    break;
+                            }
+                        }
+
+                        return [rightButton[0][0], leftButton[0][0], backButton[0][0]];
+                    }
+
+                    function drawPairGraph(container, width, height, fontSize, nodeSizeRange, linkWidthRange, legend, transition) {
+                        var format = d3.format(",d");
+
+                        var nodeColor = d3.scale.ordinal()
+                            .domain(states)
+                            .range(colorbrewer["Oranges"][states.length]),
+                            nodeSize = d3.scale.linear()
+                            .range(nodeSizeRange);
+
+                        var linkColor = d3.scale.ordinal()
+                            .domain(locations)
+                            .range(colorbrewer["Blues"][locations.length + 1].slice(1)),
+                            linkWidth = d3.scale.linear()
+                            .range(linkWidthRange);
+
+                        var pairs = window.pairs.filter(function (elem) {
+                            return elem.langs.indexOf(langData.lang) !== -1;
+                        }),
+                            links = [],
+                            nodes = pairs.map(function (elem, i) {
+                                var otherLang = elem.langs[1 - elem.langs.indexOf(langData.lang)];
+                                var stems, state;
+                                transducers.forEach(function (elem) {
+                                    if(elem.lang === otherLang) {
+                                        stems = elem.stems;
+                                        state = elem.state;
+                                    }
+                                });
+
+                                links.push({source: 0, target: i + 1, location: elem.location, stems: elem.stems});
+                                return {lang: otherLang, stems: stems, state: state};
+                            });
+                            nodes.unshift({lang: langData.lang, stems: langData.stems, state: langData.state});
+
+                        nodeSize.domain([0, nodes.reduce(function (prev, curr) { return curr.stems > prev ? curr.stems : prev; }, Number.MIN_VALUE)]);
+                        linkWidth.domain([0, links.reduce(function (prev, curr) { return curr.stems > prev ? curr.stems : prev; }, Number.MIN_VALUE)]);
+
+                        var force = d3.layout.force()
+                            .charge(-750)
+                            .gravity(.05)
+                            .friction(.95)
+                            .linkDistance(function (d) { return Math.max(nodeSize(d.target.stems), nodeSize(d.source.stems)) * 3.5; })
+                            .size([width, height]);
+
+                        var svg = container.append("svg")
+                            .attr("width", width)
+                            .attr("height", height)
+                            .style("opacity", transition ? 0 : 1);
+
+                        force
+                            .nodes(nodes)
+                            .links(links)
+                            .start();
+
+                        var link = svg.selectAll(".link")
+                            .data(links)
+                            .enter()
+                            .append("line")
+                                .attr("class", "link")
+                                .style("stroke", function (d) { return linkColor(d.location); })
+                                .style("stroke-width", function (d) { return linkWidth(d.stems); });
+
+                        link.append("title")
+                                .text(function (d) { return d.stems + " stems"; });
+
+                        var node = svg.selectAll(".langPairNode")
+                            .data(nodes)
+                            .enter()
+                            .append("g")
+                                .attr("class", "langPairNode");
+
+                        node.append("circle")
+                            .attr("r", function (d) { return nodeSize(d.stems); })
+                            .style("fill", function (d) { return nodeColor(d.state); })
+                            .call(force.drag);
+
+                        node.append("text")
+                            .attr("dx", function (d) { return nodeSize(d.stems) + 2 + "px"; })
+                            .attr("dy", ".35em")
+                            .style("font-weight", "bold")
+                            .style("font-size", fontSize)
+                            .text(function (d) { return codeToName(d.lang, nativeNames); });
+
+                        node.append("title")
+                            .text(function (d) { return format(d.stems) + " stems"; });
+
+                        force.on("tick", function() {
+                            link.attr("x1", function(d) { return d.source.x; })
+                                .attr("y1", function(d) { return d.source.y; })
+                                .attr("x2", function(d) { return d.target.x; })
+                                .attr("y2", function(d) { return d.target.y; });
+
+                            node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+                        });
+
+                        if(legend) {
+                            var nodeLegend = svg.selectAll(".nodeLegendEntry")
+                                .data(states)
+                                .enter()
+                                .append("g")
+                                    .attr("class", "nodeLegendEntry")
+                                    .attr("transform", function (d, i) { return "translate(" + width * 5 / 6 + "," + (30 + i * 30) + ")"; });
+
+                            nodeLegend.append("rect")
+                                .attr("width", 20)
+                                .attr("height", 20)
+                                .attr("fill", function (d) { return nodeColor(d); });
+
+                            nodeLegend.append("text")
+                                .text(function (d, i) { return d; })
+                                .attr("dy", 15)
+                                .attr("dx", 25);
+
+                            var linkLegend = svg.selectAll(".linkLegendEntry")
+                                .data(locations)
+                                .enter()
+                                .append("g")
+                                    .attr("class", "linkLegendEntry")
+                                    .attr("transform", function (d, i) { return "translate(0," + (30 + i * 30) + ")"; });
+
+                            linkLegend.append("rect")
+                                .attr("width", 20)
+                                .attr("height", 20)
+                                .attr("fill", function (d) { return linkColor(d); });
+
+                            linkLegend.append("text")
+                                .text(function (d, i) { return d; })
+                                .attr("dy", 15)
+                                .attr("dx", 25);
+                        }
+
+                        if(transition)
+                            svg.transition()
+                                .style("opacity", 1);
+
+                        return svg;
+                    }
+
+                    function drawContributionsDonut(container, width, height, outerRadiusOffset, innerRadiusOffset, labelFontSize, centerTitleFontSize, contributionsFontSize, showNumbers, transition) {
+                        var radius = Math.min(width, height) / 2;
+
+                        var totalContributions = langData.contributors.reduce(function (prev, curr) { return curr.value + prev; }, 0),
+                            otherValue = 0,
+                            contributors = langData.contributors.filter(function (e) {
+                                if(e.value / totalContributions < .05)
+                                    otherValue += e.value;
+                                return e.value / totalContributions > .05;
+                            }).concat(otherValue ? {user: "other", value: otherValue} : [])
+                            numColors = Math.max(3, Math.min(9, Object.keys(contributors).length + otherValue ? 1 : 0));
+
+                        var color = d3.scale.linear()
+                            .range([colorbrewer["Oranges"][numColors][0], colorbrewer["Oranges"][numColors][numColors - 1]])
+                            .domain([0, contributors.reduce(function (prev, curr) { return curr.value > prev ? curr.value : prev; }, Number.MIN_VALUE)]);
+
+                        var arc = d3.svg.arc()
+                            .outerRadius(radius - outerRadiusOffset)
+                            .innerRadius(radius - innerRadiusOffset);
+
+                        var pie = d3.layout.pie()
+                            .value(function (d) { return d.value; });
+
+                        var svg = container.append("svg")
+                            .attr("width", width)
+                            .attr("height", height)
+                            .style("opacity", transition ? 0 : 1)
+                            .append("g")
+                                .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+                        var g = svg.selectAll(".arc")
+                            .data(pie(contributors))
+                            .enter()
+                            .append("g")
+                                .attr("class", "arc");
+
+                        g.append("path")
+                            .attr("d", arc)
+                            .style("fill", function (d) { return color(d.value)})
+                            .append("title")
+                                .text(function (d) { return d.value + " contributions"; });
+
+                        g.append("text")
+                            .attr("transform", function (d) { return "translate(" + arc.centroid(d) + ")"; })
+                            .attr("dy", ".35em")
+                            .style("font-weight", "bold")
+                            .style("font-size", labelFontSize)
+                            .style("text-anchor", "middle")
+                            .text(function (d) { return d.data.user + (showNumbers ? " (" + d.data.value + ")" : ""); });
+
+                        var splitLocation = langData.location.split(" "),
+                            svnLink = svnRoot + splitLocation[1].substring(1, splitLocation[1].length - 1) + "/" + splitLocation[0];
+
+                        var foreignObject = svg.append("foreignObject")
+                            .attr("width", width)
+                            .attr("height", height);
+
+                        var innerInfo = foreignObject.append("xhtml:body")
+                                .append("div");
+
+                        innerInfo.append("div")
+                            .style("margin-bottom", 0)
+                            .style("font-size", centerTitleFontSize)
+                            .style("font-weight", "bold")
+                            .append("a")
+                                .attr("href", svnLink)
+                                .attr("target", "_blank")
+                                .append("text")
+                                    .text(langData.location);
+
+                        innerInfo.append("div")
+                            .style("margin-top", ".25em")
+                            .style("font-weight", "bold")
+                            .style("font-size", contributionsFontSize)
+                            .text(totalContributions + " contributions");
+
+                        foreignObject.attr("transform", "translate(" + (- width / 2) + "," + (- $(innerInfo[0]).height() / 2) + ")");
+
+                        if(transition)
+                            container.select("svg").transition()
+                                .style("opacity", 1);
+
+                        return container.select("svg");
+                    }
+                });
+
+                var legend = svg.selectAll(".legendEntry")
+                    .data(states)
+                    .enter()
+                    .append("g")
+                        .attr("class", "legendEntry")
+                        .attr("transform", function (d, i) { return "translate(" + diameter * 4 / 5 + "," + (30 + i * 30) + ")"; });
+
+                legend.append("rect")
+                    .attr("width", 20)
+                    .attr("height", 20)
+                    .attr("fill", function (d) { return color(d); });
+
+                legend.append("text")
+                    .text(function (d, i) { return d; })
+                    .attr("dy", 15)
+                    .attr("dx", 25);
+
+                svg.append("text")
+                    .attr("x", diameter * 1 / 7)
+                    .attr("y", 60)
+                    .style("font-weight", "bold")
+                    .style("font-size", "3.5em")
+                    .text("Turkic Languages");
+
+                var nativeNameToggle = svg.append("text")
+                    .attr("x", 30)
+                    .attr("y", diameter * 9 / 10)
+                    .attr("id", "nativeNameToggle")
+                    .style("font-size", "1.25em")
+                    .style("cursor", "pointer")
+                    .text("native name ☐");
+
+                nativeNameToggle.on("click", function () {
+                    nativeNames = !nativeNames;
+                    nativeNameToggle.text("native name " + (nativeNames ? "☑" : "☐"))
+                        .attr("fill", nativeNames ? "orangered" : "black");
+
+                    node.selectAll(".langDetails")
+                        .transition()
+                            .duration(400)
+                            .style("color", function (d) { return color(d.state); })
+                            .each("end", function (d) {
+                                d3.select(this).select(".langName")
+                                    .text(function (d) { return codeToName(d.lang, nativeNames); });
+
+                                d3.select(this)
+                                .style("padding-top", function (d) { return (d.r * 2 - $(this).height()) / 2 + "px"; })
+                                .transition()
+                                    .duration(400)
+                                    .style("color", "black");
+                            });
+                });
+            }
+
+            $(document).ready(function () {
+                createChart();
+            });
+
+            $(window).resize(function () {
+                clearTimeout($.data(this, 'resizeTimer'));
+                $.data(this, 'resizeTimer', setTimeout(function() {
+                    $("#bubbleChart").remove();
+                    createChart();
+                }, 200));
+            });
+
+            $(document).keyup(function(e) {
+              if(e.keyCode == 27)
+                 closeLangInfoBox();
+            });
+
+            function closeLangInfoBox() {
+                $(".overlay, .langInfoBox").fadeOut(function () {
+                    $(this).remove();
+                });
+            }
+
+            /* var diameter = 960,
+                radius = diameter / 2,
+                innerRadius = radius - 120;
+
+            var cluster = d3.layout.cluster()
+                                       .size([360, innerRadius])
+                                       .sort(null)
+                                       .value(function (d) { return d.size; });
+
+            var bundle = d3.layout.bundle();
+
+            var line = d3.svg.line.radial()
+                                      .interpolate("bundle")
+                                      .tension(.85)
+                                      .radius(function (d) { return d.y} )
+                                      .angle(function (d) { return d.x / 180 * Math.PI});
+
+            var svg = d3.select("body").append("svg")
+                                           .attr("width", diameter)
+                                           .attr("height", diameter)
+                                       .append("g")
+                                           .attr("transform", "translate(" + radius + "," + radius + ")");
+
+           var g = node.append("g")
+                           .attr("transform", function (d) { return "translate(-" + d.r + ",-" + d.r + ")"; });
+                           //.attr("dy", function (d) { return d.r * 1 / 8 + "px"; });
+                   /*.attr("transform", function (d) {
+                       var side = 2 * d.r * Math.cos(Math.PI / 4),
+                           dx = d.r - side / 2;
+                       return "translate(" + dx + "," + dx + ")";
+                   });
+
+           g.append("foreignObject")
+               .attr("width", function (d) { return 2 * d.r })
+               .attr("height", function (d) { return 2 * d.r })
+               .append("xhtml:body")
+                   .append("div")
+                       .style("text-align", "center")
+                       .attr("class", "langName")
+                       .html(function (d) { return codeToName(d.lang, nativeNames); })
+
+            /* node.append("text")
+                    .attr("dy", function (d) { return d.r * 1 / 8 + "px"; })
+                    .attr("class", "langName")
+                    .style("text-anchor", "middle")
+                    .style("font-size", function (d) { return Math.max(.5, d.r / 40) + "em"; })
+                    .text(function (d) { return codeToName(d.lang, nativeNames); });
+
+            node.append("text")
+                    .attr("dy", function (d) { return $(this).siblings('text').height() + 1 + "px"; })
+                    .style("font-size", function (d) { return Math.max(.5, d.r / 80) + "em"; })
+                    .style("text-anchor", "middle")
+                    .text(function (d) { return format(d.stems); }); */
+
+        </script>
+    </body>
+</html>
