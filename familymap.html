@@ -111,7 +111,7 @@
                 cursor: pointer;
             }
 
-            path { 
+            path {
                 stroke: #FD8D3C;
                 stroke-width: 2;
                 fill: none;
@@ -119,7 +119,7 @@
 
             .axis path, .axis line {
                 fill: none;
-                stroke: grey;
+                stroke: black;
                 stroke-width: 1;
                 shape-rendering: crispEdges;
             }
@@ -127,7 +127,7 @@
 
         <script src="./d3.min.js" type="text/javascript"></script>
         <script src="./colorbrewer.js" type="text/javascript"></script>
-        <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" type="text/javascript"></script> -->
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" type="text/javascript"></script>
         <script type="text/javascript">
             if(!window.jQuery) {
                 document.write('<script src="./jquery.min.js"><\/script>');
@@ -336,7 +336,7 @@
                     var chartFunctions = {
                         1: function () { return drawContributionsDonut(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, 10, 130, "1.5em", "1.5em", "1.17em", true, true); },
                         2: function () { return drawPairGraph(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, "1.75em", [25, 70], [10, 35], true); },
-                        3: function () { return drawDevelopmentPlot(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, {top: 30, right: 20, bottom: 30, left: 50}); },
+                        3: function () { return drawDevelopmentPlot(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, {top: 30, right: 20, bottom: 50, left: 50}, 7, 7, "1.5em", true); },
                         4: function () { alert("Coming soon!"); }
                     };
 
@@ -366,7 +366,7 @@
 
                         drawContributionsDonut(d3.select(chartPreviews[0][0]), width - 15, height - 15, 10, 65, "1em", ".9em", ".85em");
                         drawPairGraph(d3.select(chartPreviews[0][1]), width - 15, height - 15, "1em", [5, 30], [5, 15]);
-                        drawDevelopmentPlot(d3.select(chartPreviews[0][2]), width - 15, height - 15, {top: 30, right: 20, bottom: 30, left: 50});
+                        drawDevelopmentPlot(d3.select(chartPreviews[0][2]), width - 15, height - 15, {top: 30, right: 20, bottom: 40, left: 60}, 4, 5, "1em");
 
                         return chartPreviews;
                     }
@@ -661,7 +661,7 @@
                         return container.select("svg");
                     }
 
-                    function drawDevelopmentPlot(container, width, height, margin) {
+                    function drawDevelopmentPlot(container, width, height, margin, xTicks, yTicks, labelFontSize, transition) {
                         width = width - margin.left - margin.right,
                         height = height - margin.top - margin.bottom;
 
@@ -673,12 +673,12 @@
 
                         var xAxis = d3.svg.axis().scale(x)
                             .orient("bottom")
-                            .ticks(7)
+                            .ticks(xTicks)
                             .tickFormat(d3.time.format("%b %Y"));
 
                         var yAxis = d3.svg.axis().scale(y)
                             .orient("left")
-                            .ticks(7);
+                            .ticks(yTicks);
 
                         var valueline = d3.svg.line()
                             .x(function (d) { return x(d.date); })
@@ -688,9 +688,21 @@
                             .append("svg")
                                 .attr("width", width + margin.left + margin.right)
                                 .attr("height", height + margin.top + margin.bottom)
+                                .style("opacity", transition ? 0 : 1)
                             .append("g")
-                                .attr("transform", 
+                                .attr("transform",
                                       "translate(" + margin.left + "," + margin.top + ")");
+
+                        svg.append("text")
+                            .style("font-weight", "bold")
+                            .style("font-size", labelFontSize)
+                            .attr("transform", "translate(25, 100)rotate(270)")
+                            .text('Stems in dictionary');
+
+                        var lineSvg = svg.append("g");
+
+                        var focus = svg.append("g")
+                            .style("display", "none");
 
                         d3.json("/json/" + langData.lang + ".json", function (error, commits) {
                             commits.forEach(function (d) {
@@ -698,10 +710,12 @@
                                 d.stems = +d.stems;
                             });
 
+                            commits = commits.sort(function (a, b) {  return a.date - b.date; });
+
                             x.domain(d3.extent(commits, function (d) { return d.date; }));
                             y.domain([d3.min(commits, function (d) { return d.stems; }) * .95, d3.max(commits, function (d) { return d.stems; }) * 1.05]);
-                            
-                            svg.append("path")
+
+                            lineSvg.append("path")
                                 .attr("class", "line")
                                 .attr("d", valueline(commits));
 
@@ -713,9 +727,41 @@
                             svg.append("g")
                                 .attr("class", "y axis")
                                 .call(yAxis);
+
+                            focus.append("circle")
+                                .attr("class", "y")
+                                .style("fill", "none")
+                                .style("stroke", "#FD8D3C")
+                                .style("stroke-width", "2")
+                                .attr("r", 4);
+
+                            svg.append("rect")
+                                .attr("width", width)
+                                .attr("height", height)
+                                .style("fill", "none")
+                                .style("pointer-events", "all")
+                                .on("mouseover", function() { focus.style("display", "inline"); })
+                                .on("mouseout", function() { focus.style("display", "none"); })
+                                .on("mousemove", mousemove);
+
+                            var bisectDate = d3.bisector(function(d) { return d.date; }).left;
+                            function mousemove() {
+                                var x0 = x.invert(d3.mouse(this)[0]),
+                                    i = bisectDate(commits, x0, 1),
+                                    d0 = commits[i - 1],
+                                    d1 = commits[i],
+                                    d = x0 - d0.date > d1.date - x0 ? d1 : d0;
+
+                                focus.select("circle.y")
+                                    .attr("transform", "translate(" + x(d.date) + "," + y(d.stems) + ")");
+                            }
                         });
 
-                        return svg;
+                        if(transition)
+                            container.select("svg").transition()
+                                .style("opacity", 1);
+
+                        return container.select("svg");
                     }
                 });
 
