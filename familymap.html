@@ -123,6 +123,11 @@
                 stroke-width: 1;
                 shape-rendering: crispEdges;
             }
+
+            .commitTooltip {
+                background-color: rgba(0, 0, 0, .2);
+                font-size: .75em;
+            }
         </style>
 
         <script src="./d3.min.js" type="text/javascript"></script>
@@ -336,7 +341,7 @@
                     var chartFunctions = {
                         1: function () { return drawContributionsDonut(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, 10, 130, "1.5em", "1.5em", "1.17em", true, true); },
                         2: function () { return drawPairGraph(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, "1.75em", [25, 70], [10, 35], true); },
-                        3: function () { return drawDevelopmentPlot(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, {top: 30, right: 20, bottom: 50, left: 50}, 7, 7, "1.5em", true); },
+                        3: function () { return drawDevelopmentPlot(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, {top: 30, right: 20, bottom: 50, left: 50}, 7, 7, "2em", true); },
                         4: function () { alert("Coming soon!"); }
                     };
 
@@ -366,7 +371,7 @@
 
                         drawContributionsDonut(d3.select(chartPreviews[0][0]), width - 15, height - 15, 10, 65, "1em", ".9em", ".85em");
                         drawPairGraph(d3.select(chartPreviews[0][1]), width - 15, height - 15, "1em", [5, 30], [5, 15]);
-                        drawDevelopmentPlot(d3.select(chartPreviews[0][2]), width - 15, height - 15, {top: 30, right: 20, bottom: 40, left: 60}, 4, 5, "1em");
+                        drawDevelopmentPlot(d3.select(chartPreviews[0][2]), width - 15, height - 15, {top: 30, right: 20, bottom: 40, left: 60}, 4, 5, "1.5em");
 
                         return chartPreviews;
                     }
@@ -696,13 +701,14 @@
                         svg.append("text")
                             .style("font-weight", "bold")
                             .style("font-size", labelFontSize)
-                            .attr("transform", "translate(25, 100)rotate(270)")
-                            .text('Stems in dictionary');
+                            .style("font-variant", "small-caps")
+                            .attr("transform", "translate(" + (width / 2 - margin.right - margin.left) + "," + margin.top / 2 + ")")
+                            .text("stems in dictionary");
 
                         var lineSvg = svg.append("g");
 
                         var focus = svg.append("g")
-                            .style("display", "none");
+                            .style("opacity", 0);
 
                         d3.json("/json/" + langData.lang + ".json", function (error, commits) {
                             commits.forEach(function (d) {
@@ -719,6 +725,41 @@
                                 .attr("class", "line")
                                 .attr("d", valueline(commits));
 
+                            focus.append("circle")
+                                .attr("class", "y")
+                                .style("fill", "none")
+                                .style("stroke", "#FD8D3C")
+                                .style("stroke-width", "2")
+                                .attr("r", 4);
+
+                            var foreignObject = focus.append("foreignObject").style("opacity", 0);
+                            var commitInfo = foreignObject.append("xhtml:body")
+                                .append("div")
+                                    .style("opacity", 0)
+                                    .style("width", width / 5)
+                                    .attr("class", "commitTooltip");
+
+                            svg.selectAll("dot")
+                                    .data(commits)
+                                .enter().append("circle")
+                                    .attr("r", 3)
+                                    .attr("fill", "#d94801")
+                                    .attr("cx", function(d) { return x(d.date); })
+                                    .attr("cy", function(d) { return y(d.stems); })
+                                    .style("pointer-events", "all")
+                                    .on("mouseout", function () { focus.transition().style("opacity", 0);  commitInfo.transition().style("opacity", 0); console.log('mouseout'); })
+                                    .on("mouseover", function (d) {
+                                        focus.select("circle.y")
+                                            .attr("transform", "translate(" + x(d.date) + "," + y(d.stems) + ")");
+                                        focus.transition().style("opacity", 1);
+
+                                        commitInfo.html(d.stems + " stems @ " + "r" + d.rev + "<br>" + d.author + " - " + d.date.toDateString())
+                                        foreignObject.attr("x", d3.event.pageX)
+                                            .attr("y", d3.event.pageY - 28);
+                                        console.log(d3.event.pageX, d3.event.pageY);
+                                        commitInfo.transition().style("opacity", 1);
+                                    });
+
                             svg.append("g")
                                 .attr("class", "x axis")
                                 .attr("transform", "translate(0," + height + ")")
@@ -728,32 +769,9 @@
                                 .attr("class", "y axis")
                                 .call(yAxis);
 
-                            focus.append("circle")
-                                .attr("class", "y")
-                                .style("fill", "none")
-                                .style("stroke", "#FD8D3C")
-                                .style("stroke-width", "2")
-                                .attr("r", 4);
-
-                            svg.append("rect")
-                                .attr("width", width)
-                                .attr("height", height)
-                                .style("fill", "none")
-                                .style("pointer-events", "all")
-                                .on("mouseover", function() { focus.style("display", "inline"); })
-                                .on("mouseout", function() { focus.style("display", "none"); })
-                                .on("mousemove", mousemove);
-
                             var bisectDate = d3.bisector(function(d) { return d.date; }).left;
-                            function mousemove() {
-                                var x0 = x.invert(d3.mouse(this)[0]),
-                                    i = bisectDate(commits, x0, 1),
-                                    d0 = commits[i - 1],
-                                    d1 = commits[i],
-                                    d = x0 - d0.date > d1.date - x0 ? d1 : d0;
+                            function showCommitData() {
 
-                                focus.select("circle.y")
-                                    .attr("transform", "translate(" + x(d.date) + "," + y(d.stems) + ")");
                             }
                         });
 
