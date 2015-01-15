@@ -126,7 +126,7 @@
 
             .commitInfo {
                 background-color: rgba(0, 0, 0, .1);
-                font-size: .75em;
+                font-size: .8em;
                 position: relative;
                 z-index: 10000;
                 -moz-border-radius: 10px;
@@ -155,7 +155,7 @@
         <script type="text/javascript">
             var nativeNames = false,
                 svnRoot = "https://svn.code.sf.net/p/apertium/svn/",
-                svnViewRoot = "http://sourceforge.net/p/apertium/svn/"; // http://sourceforge.net/p/apertium/svn/{revisionNumber}/tree/{path}
+                svnViewRevisionRoot = "https://sourceforge.net/p/apertium/svn/";
 
             var pairs = [
                 {"langs": ["tur", "aze"], "location": "nursery", "stems": 8194},
@@ -353,7 +353,7 @@
                     var chartFunctions = {
                         1: function () { return drawContributionsDonut(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, 10, 130, "1.5em", "1.5em", "1.17em", true, true); },
                         2: function () { return drawPairGraph(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, "1.75em", [25, 70], [10, 35], true); },
-                        3: function () { return drawDevelopmentPlot(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, {top: 20, right: 30, bottom: 60, left: 70}, 7, 7, "2em", true, true); },
+                        3: function () { return drawDevelopmentPlot(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, {top: 20, right: 30, bottom: 60, left: 70}, 5, 6, "2em", true, true); },
                         4: function () { alert("Coming soon!"); }
                     };
 
@@ -692,7 +692,7 @@
                         var xAxis = d3.svg.axis().scale(x)
                             .orient("bottom")
                             .ticks(xTicks)
-                            .tickFormat(d3.time.format("%b %Y"));
+                            .tickFormat(d3.time.format("%b %d '%y"));
 
                         var yAxis = d3.svg.axis().scale(y)
                             .orient("left")
@@ -801,9 +801,7 @@
                                     .on("dblclick", function (d) {
                                         d3.event.preventDefault();
                                         d3.event.stopPropagation();
-                                        loc = langData.location.substring(langData.location.indexOf('(') + 1, langData.location.length - 1);
-                                        link = svnViewRoot + d.rev + '/tree/' + loc + '/apertium-' + langData.lang + '/apertium-' + langData.lang + '.' + langData.lang + '.lexc';
-                                        window.open(link);
+                                        window.open(svnViewRevisionRoot + d.rev);
                                         return false;
                                     });
 
