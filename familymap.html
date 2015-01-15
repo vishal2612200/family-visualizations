@@ -353,7 +353,7 @@
                     var chartFunctions = {
                         1: function () { return drawContributionsDonut(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, 10, 130, "1.5em", "1.5em", "1.17em", true, true); },
                         2: function () { return drawPairGraph(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, "1.75em", [25, 70], [10, 35], true); },
-                        3: function () { return drawDevelopmentPlot(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, {top: 20, right: 30, bottom: 60, left: 70}, 5, 6, "2em", true, true); },
+                        3: function () { return drawDevelopmentPlot(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, {top: 20, right: 30, bottom: 60, left: 70}, 5, 6, "2em", 20, true); },
                         4: function () { alert("Coming soon!"); }
                     };
 
@@ -383,7 +383,7 @@
 
                         drawContributionsDonut(d3.select(chartPreviews[0][0]), width - 15, height - 15, 10, 65, "1em", ".9em", ".85em");
                         drawPairGraph(d3.select(chartPreviews[0][1]), width - 15, height - 15, "1em", [5, 30], [5, 15]);
-                        drawDevelopmentPlot(d3.select(chartPreviews[0][2]), width - 15, height - 15, {top: 30, right: 20, bottom: 40, left: 60}, 4, 5, "1.5em");
+                        drawDevelopmentPlot(d3.select(chartPreviews[0][2]), width - 15, height - 15, {top: 30, right: 20, bottom: 40, left: 60}, 4, 5, "1.5em", 120);
 
                         return chartPreviews;
                     }
@@ -679,7 +679,7 @@
                         return container.select("svg");
                     }
 
-                    function drawDevelopmentPlot(container, width, height, margin, xTicks, yTicks, labelFontSize, showCommitDetails, transition) {
+                    function drawDevelopmentPlot(container, width, height, margin, xTicks, yTicks, labelFontSize, commitInfoOffset, transition) {
                         width = width - margin.left - margin.right,
                         height = height - margin.top - margin.bottom;
 
@@ -732,7 +732,7 @@
                             commits = commits.sort(function (a, b) {  return a.date - b.date; });
 
                             x.domain(d3.extent(commits, function (d) { return d.date; }));
-                            y.domain([d3.min(commits, function (d) { return d.stems; }) * .95, d3.max(commits, function (d) { return d.stems; }) * 1.05]);
+                            y.domain([0, d3.max(commits, function (d) { return d.stems; }) * 1.1]);
 
                             lineSvg.append("path")
                                 .attr("class", "line")
@@ -759,9 +759,9 @@
                             var commitInfo = container.append("div")
                                 .style({
                                     "opacity": 0,
-                                    "width": width / 3.25 + "px",
-                                    "left": (width - margin.right) * .9 + "px",
-                                    "top": - margin.bottom * 2 + "px"
+                                    "width": "180px",
+                                    "left": width - commitInfoOffset + "px",
+                                    "top": - margin.bottom * 2.25 + "px"
                                 })
                                 .attr("class", "commitInfo");
 
@@ -776,8 +776,7 @@
                                     .style("cursor", "pointer")
                                     .on("mouseout", function () {
                                         focus.transition().style("opacity", 0);
-                                        if(showCommitDetails)
-                                            commitInfo.transition().style("opacity", 0);
+                                        commitInfo.transition().style("opacity", 0);
                                     })
                                     .on("mouseover", function (d) {
                                         focus.select("circle.commitFocus")
@@ -793,10 +792,8 @@
 
                                         focus.transition().style("opacity", 1);
 
-                                        if(showCommitDetails) {
-                                            commitInfo.html(d.stems + " stems @ " + "r" + d.rev + "<br>" + d.author + " - " + d.date.toDateString())
-                                            commitInfo.transition().style("opacity", 1);
-                                        }
+                                        commitInfo.html(d.stems + " stems @ " + "r" + d.rev + "<br>" + d.author + " - " + d.date.toDateString())
+                                        commitInfo.transition().style("opacity", 1);
                                     })
                                     .on("dblclick", function (d) {
                                         d3.event.preventDefault();
