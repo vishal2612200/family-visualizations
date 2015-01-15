@@ -11,5 +11,5 @@ ruby overtime.rb languages kaa | tee ./json/kaa.json
 ruby overtime.rb languages uzb | tee ./json/uzb.json
 ruby overtime.rb languages bak | tee ./json/bak.json
 ruby overtime.rb languages nog | tee ./json/nog.json
-ruby overtime.rb languages tuk | tee ./json/chv.json
+ruby overtime.rb languages tuk | tee ./json/tuk.json
 ruby overtime.rb languages kaz | tee ./json/kaz.json

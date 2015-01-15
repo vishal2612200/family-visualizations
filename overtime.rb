@@ -12,12 +12,7 @@ begin
     stems = []
     doc.css("logentry").each do |logentry|
         rev = logentry.attr("revision").to_i
-        out = `svn export #{filename}@#{rev} /tmp/#{lang}.#{rev}.lexc --force 2>&1`
-        if not out.include? "Export complete."
-            location = "incubator"
-            filename = "https://svn.code.sf.net/p/apertium/svn/#{location}/apertium-#{lang}/apertium-#{lang}.#{lang}.lexc"
-            `svn export #{filename}@#{rev} /tmp/#{lang}.#{rev}.lexc --force 2>&1`
-        end
+        out = `svn export #{filename} /tmp/#{lang}.#{rev}.lexc --force -r #{rev} 2>&1`
         stems << {
             'rev' => rev,
             'stems' => `python3 ./lexccounter.py /tmp/#{lang}.#{rev}.lexc`.split(" ")[2].chomp.to_i,

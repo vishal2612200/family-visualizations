@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 xml = `svn log --xml https://svn.code.sf.net/p/apertium/svn/#{ARGV[0]}/apertium-#{ARGV[1]}`
 require 'nokogiri'
 doc = Nokogiri::XML(xml); nil
