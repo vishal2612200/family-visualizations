@@ -124,7 +124,7 @@
                 shape-rendering: crispEdges;
             }
 
-            .commitTooltip {
+            .commitInfo {
                 background-color: rgba(0, 0, 0, .1);
                 font-size: .75em;
                 position: relative;
@@ -132,6 +132,12 @@
                 -moz-border-radius: 10px;
                 border-radius: 10px;
                 padding: 3px;
+            }
+
+            .commitFocus {
+                fill: none;
+                stroke: #FD8D3C;
+                stroke-width: 2;
             }
         </style>
 
@@ -418,6 +424,7 @@
                             .attr("class", "navigButton backButton")
                             .on("click", function () {
                                 $(buttons).fadeOut('fast');
+                                $('.commitInfo').remove();
                                 currentChart.transition()
                                     .style("opacity", 0)
                                     .remove()
@@ -732,8 +739,22 @@
                                 .attr("d", valueline(commits));
 
                             focus.append("circle")
-                                .attr("class", "commitCircle")
+                                .attr("class", "commitFocus")
                                 .attr("r", 4);
+
+                            focus.append("line")
+                                .attr("class", "y")
+                                .style("stroke", "black")
+                                .style("stroke-dasharray", "3,3")
+                                .style("opacity", 0.3)
+                                .attr("y1", height);
+
+                            focus.append("line")
+                                .attr("class", "x")
+                                .style("stroke", "black")
+                                .style("stroke-dasharray", "3,3")
+                                .style("opacity", 0.3)
+                                .attr("x1", 0);
 
                             var commitInfo = container.append("div")
                                 .style({
@@ -742,7 +763,7 @@
                                     "left": (width - margin.right) * .9 + "px",
                                     "top": - margin.bottom * 2 + "px"
                                 })
-                                .attr("class", "commitTooltip");
+                                .attr("class", "commitInfo");
 
                             svg.selectAll("dot")
                                     .data(commits)
@@ -759,8 +780,17 @@
                                             commitInfo.transition().style("opacity", 0);
                                     })
                                     .on("mouseover", function (d) {
-                                        focus.select("circle.y")
+                                        focus.select("circle.commitFocus")
                                             .attr("transform", "translate(" + x(d.date) + "," + y(d.stems) + ")");
+                                        focus.select("line.y")
+                                            .attr("x1", x(d.date))
+                                            .attr("x2", x(d.date))
+                                            .attr("y2", y(d.stems));
+                                        focus.select("line.x")
+                                            .attr("x2", x(d.date))
+                                            .attr("y1", y(d.stems))
+                                            .attr("y2", y(d.stems));
+
                                         focus.transition().style("opacity", 1);
 
                                         if(showCommitDetails) {
