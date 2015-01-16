@@ -3,9 +3,10 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <title>Language Family Map</title>
+        <link href='http://fonts.googleapis.com/css?family=Rosario:700,400' rel='stylesheet' type='text/css'>
         <style>
             body {
-                font-family: Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+                font-family: Rosario, Open Sans, Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
                 text-align: center;
             }
 
@@ -383,7 +384,7 @@
 
                         drawContributionsDonut(d3.select(chartPreviews[0][0]), width - 15, height - 15, 10, 65, "1em", ".9em", ".85em");
                         drawPairGraph(d3.select(chartPreviews[0][1]), width - 15, height - 15, "1em", [5, 30], [5, 15]);
-                        drawDevelopmentPlot(d3.select(chartPreviews[0][2]), width - 15, height - 15, {top: 30, right: 20, bottom: 40, left: 60}, 3, 5, "1.5em", 120);
+                        drawDevelopmentPlot(d3.select(chartPreviews[0][2]), width - 15, height - 15, {top: 30, right: 30, bottom: 40, left: 60}, 3, 5, "1.5em", 150);
 
                         return chartPreviews;
                     }
@@ -597,14 +598,19 @@
                     function drawContributionsDonut(container, width, height, outerRadiusOffset, innerRadiusOffset, labelFontSize, centerTitleFontSize, contributionsFontSize, showNumbers, transition) {
                         var radius = Math.min(width, height) / 2;
 
+                        var otherContributors = [];
                         var totalContributions = langData.contributors.reduce(function (prev, curr) { return curr.value + prev; }, 0),
                             otherValue = 0,
                             contributors = langData.contributors.filter(function (e) {
-                                if(e.value / totalContributions < .05)
+                                if(e.value / totalContributions < .05) {
                                     otherValue += e.value;
+                                    otherContributors.push([e.user, e.value]);
+                                }
                                 return e.value / totalContributions > .05;
                             }).concat(otherValue ? {user: "other", value: otherValue} : [])
                             numColors = Math.max(3, Math.min(9, Object.keys(contributors).length + otherValue ? 1 : 0));
+
+                        otherContributors.sort(function (a, b) { return b[1] - a[1]; });
 
                         var color = d3.scale.linear()
                             .range([colorbrewer["Oranges"][numColors][0], colorbrewer["Oranges"][numColors][numColors - 1]])
@@ -630,11 +636,17 @@
                             .append("g")
                                 .attr("class", "arc");
 
+                        g.append("title")
+                            .text(function (d) {
+                                if(d.data.user === 'other' && showNumbers)
+                                    return otherContributors.map(function (c) { return c[0] + " (" + c[1] + (c[1] == 1 ? " contribution)" : " contributions)"); }).join(", ");
+                                else
+                                    return d.value + " contributions";
+                            });
+
                         g.append("path")
                             .attr("d", arc)
-                            .style("fill", function (d) { return color(d.value)})
-                            .append("title")
-                                .text(function (d) { return d.value + " contributions"; });
+                            .style("fill", function (d) { return color(d.value)});
 
                         g.append("text")
                             .attr("transform", function (d) { return "translate(" + arc.centroid(d) + ")"; })
@@ -759,7 +771,7 @@
                             var commitInfo = container.append("div")
                                 .style({
                                     "opacity": 0,
-                                    "width": "180px",
+                                    "width": "200px",
                                     "left": width - commitInfoOffset + "px",
                                     "top": - margin.bottom * 2.25 + "px"
                                 })
@@ -792,7 +804,7 @@
 
                                         focus.transition().style("opacity", 1);
 
-                                        commitInfo.html(d.stems + " stems @ " + "r" + d.rev + "<br>" + d.author + " - " + d.date.toDateString())
+                                        commitInfo.html(d.stems + " stems @ " + "r" + d.rev + " by " + d.author + "<br>" + d.date.toUTCString())
                                         commitInfo.transition().style("opacity", 1);
                                     })
                                     .on("dblclick", function (d) {
