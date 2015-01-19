@@ -360,7 +360,7 @@
                     var chartFunctions = {
                         1: function () { return drawContributionsDonut(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, 10, 130, "1.5em", "1.5em", "1.17em", true, true); },
                         2: function () { return drawPairGraph(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, "1.75em", [25, 70], [10, 35], true); },
-                        3: function () { return drawDevelopmentPlot(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, {top: 20, right: 50, bottom: 60, left: 70}, 5, 6, "2em", "1em", 40, true, true); },
+                        3: function () { return drawDevelopmentPlot(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, {top: 20, right: 50, bottom: 60, left: 70}, 5, 6, "2em", "1em", 40, 80, true, true, true); },
                         4: function () { alert("Coming soon!"); }
                     };
 
@@ -390,7 +390,7 @@
 
                         drawContributionsDonut(d3.select(chartPreviews[0][0]), width - 15, height - 15, 10, 65, "1em", ".9em", ".85em");
                         drawPairGraph(d3.select(chartPreviews[0][1]), width - 15, height - 15, "1em", [5, 30], [5, 15]);
-                        drawDevelopmentPlot(d3.select(chartPreviews[0][2]), width - 15, height - 15, {top: 30, right: 40, bottom: 40, left: 60}, 3, 5, "1.5em", ".6em", 150);
+                        drawDevelopmentPlot(d3.select(chartPreviews[0][2]), width - 15, height - 15, {top: 30, right: 40, bottom: 40, left: 60}, 3, 5, "1.5em", ".6em", 150, 40);
 
                         return chartPreviews;
                     }
@@ -697,7 +697,7 @@
                         return container.select("svg");
                     }
 
-                    function drawDevelopmentPlot(container, width, height, margin, xTicks, yTicks, labelFontSize, moduleLabelFontSize, commitInfoOffset, transition, toggleBilingualLines) {
+                    function drawDevelopmentPlot(container, width, height, margin, xTicks, yTicks, labelFontSize, moduleLabelFontSize, commitInfoHorizOffset, commitInfoVertOffset, fullCommitInfo, transition, toggleBilingualLines) {
                         width = width - margin.left - margin.right,
                         height = height - margin.top - margin.bottom;
 
@@ -757,9 +757,9 @@
                         var commitInfo = container.append("div")
                             .style({
                                 "opacity": 0,
-                                "width": "200px",
-                                "left": width - commitInfoOffset + "px",
-                                "top": - margin.bottom * 2.25 + "px"
+                                "width": fullCommitInfo ? "200px" : "130px",
+                                "left": width - commitInfoHorizOffset + "px",
+                                "top": - (height + commitInfoVertOffset) + "px"
                             })
                             .attr("class", "commitInfo");
 
@@ -821,10 +821,8 @@
                                 .text(function (d) { return d.name.indexOf('-') > -1 ? codeToName(d.name.split('-')[0]) + '-' : codeToName(d.name); })
                                 .style("fill", function (d) { return color(d.name); })
                                 .style("font-size", moduleLabelFontSize)
-                                .style("font-weight", "bold")
-                                .style("stroke", "lightgray")
-                                .style("stroke-width", ".7px");
-                            
+                                .style("font-weight", "bold");
+
                             moduleLine.append("text")
                                 .datum(function (d) { return {name: d.name, value: d.history[d.history.length - 1]}; })
                                 .attr("transform", function (d) { return "translate(" + x(d.value.date) + "," + y(d.value.stems) + ")"; })
@@ -834,9 +832,7 @@
                                 .text(function (d) { return d.name.indexOf('-') > -1 ? codeToName(d.name.split('-')[1]) : null; })
                                 .style("fill", function (d) { return color(d.name); })
                                 .style("font-size", moduleLabelFontSize)
-                                .style("font-weight", "bold")
-                                .style("stroke", "lightgray")
-                                .style("stroke-width", ".7px");
+                                .style("font-weight", "bold");
 
                             var modulePoints = svg.selectAll(".modulePoints")
                                 .data(modules)
@@ -874,7 +870,7 @@
 
                                         focus.transition().style("opacity", 1);
 
-                                        commitInfo.html(d.stems + " stems @ " + "r" + d.rev + " by " + d.author + "<br>" + d.date.toUTCString())
+                                        commitInfo.html(d.stems + " stems @ " + "r" + d.rev + (fullCommitInfo ? " by " + d.author + "<br>" + d.date.toUTCString() : ""))
                                         commitInfo.style("display", "block").transition().style("opacity", 1);
                                     })
                                     .on("dblclick", function (d) {
