@@ -52,7 +52,7 @@ if added > 0
         all = JSON.parse(File.read(outputfile))
         if all
             all = all.keep_if {|e| e[:name] != lang }
-            all << [{:name => lang, :history => stems}]
+            all << {:name => lang, :history => stems}
             File.write(outputfile, all.to_json)
         else
             File.write(outputfile, [{:name => lang, :history => stems}].to_json)
