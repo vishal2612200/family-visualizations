@@ -9,8 +9,14 @@ log = `svn log --xml #{filename}`
 doc = Nokogiri::XML(log)
 
 if outputfile && File.exist?(outputfile)
-    stems = JSON.parse(File.read(outputfile))
-    revs = stems.map { |entry| entry['rev'] }
+    all = JSON.parse(File.read(outputfile))
+    if all.include?(lang)
+        stems = all[lang]['history']
+        revs = stems.map { |entry| entry['rev'] }
+    else
+        stems = []
+        revs = []
+    end
 else
     stems = []
     revs = []
@@ -38,12 +44,12 @@ end
 
 if added > 0
     if outputfile
-        File.write(outputfile, stems.to_json)
+        all = JSON.parse(File.read(outputfile))
+        all[lang]['history'] = stems
+        File.write(outputfile, all.to_json)
     else
         puts stems.to_json
     end
 end
 
 puts "Added #{added} and skipped #{skipped} (already existing) revisions."
-
-

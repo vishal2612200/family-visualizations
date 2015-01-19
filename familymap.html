@@ -76,6 +76,12 @@
                 font-weight: bold;
             }
 
+            .toggleBilingualLines {
+                position: absolute;
+                left: 70%;
+                bottom: 1em;
+            }
+
             .arc path {
                 stroke: whitesmoke;
                 stroke-width: 3px;
@@ -129,16 +135,9 @@
                 background-color: rgba(0, 0, 0, .1);
                 font-size: .8em;
                 position: relative;
-                z-index: 10000;
                 -moz-border-radius: 10px;
                 border-radius: 10px;
                 padding: 3px;
-            }
-
-            .commitFocus {
-                fill: none;
-                stroke: #FD8D3C;
-                stroke-width: 2;
             }
         </style>
 
@@ -354,7 +353,7 @@
                     var chartFunctions = {
                         1: function () { return drawContributionsDonut(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, 10, 130, "1.5em", "1.5em", "1.17em", true, true); },
                         2: function () { return drawPairGraph(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, "1.75em", [25, 70], [10, 35], true); },
-                        3: function () { return drawDevelopmentPlot(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, {top: 20, right: 30, bottom: 60, left: 70}, 5, 6, "2em", 20, true); },
+                        3: function () { return drawDevelopmentPlot(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, {top: 20, right: 30, bottom: 60, left: 70}, 5, 6, "2em", 0, true, true); },
                         4: function () { alert("Coming soon!"); }
                     };
 
@@ -424,8 +423,8 @@
                             .html("&laquo; Back")
                             .attr("class", "navigButton backButton")
                             .on("click", function () {
-                                $(buttons).fadeOut('fast');
-                                $('.commitInfo').remove();
+                                $(buttons).fadeOut("fast");
+                                $(".commitInfo, .toggleBilingualLines").remove();
                                 currentChart.transition()
                                     .style("opacity", 0)
                                     .remove()
@@ -691,7 +690,7 @@
                         return container.select("svg");
                     }
 
-                    function drawDevelopmentPlot(container, width, height, margin, xTicks, yTicks, labelFontSize, commitInfoOffset, transition) {
+                    function drawDevelopmentPlot(container, width, height, margin, xTicks, yTicks, labelFontSize, commitInfoOffset, transition, toggleBilingualLines) {
                         width = width - margin.left - margin.right,
                         height = height - margin.top - margin.bottom;
 
@@ -700,6 +699,8 @@
 
                         var y = d3.scale.linear()
                             .range([height, 0]);
+
+                        var color = d3.scale.category10();
 
                         var xAxis = d3.svg.axis().scale(x)
                             .orient("bottom")
@@ -723,76 +724,121 @@
                                 .attr("transform",
                                       "translate(" + margin.left + "," + margin.top + ")");
 
-                        svg.append("text")
-                            .style("font-weight", "bold")
-                            .style("font-size", labelFontSize)
-                            .style("font-variant", "small-caps")
-                            .attr("transform", "translate(" + (width / 2 - margin.right - margin.left) + "," + margin.top / 2 + ")")
-                            .text("stems in dictionary");
-
-                        var lineSvg = svg.append("g");
-
                         var focus = svg.append("g")
                             .style("opacity", 0);
 
-                        d3.json("/json/" + langData.lang + ".json", function (error, commits) {
-                            commits.forEach(function (d) {
-                                d.date = new Date(d.date);
-                                d.stems = +d.stems;
+                        focus.append("circle")
+                            .attr("class", "commitFocus")
+                            .attr("r", 4)
+                            .style("fill", "none")
+                            .style("stroke-width", "none");
+
+                        focus.append("line")
+                            .attr("class", "y")
+                            .style("stroke", "black")
+                            .style("stroke-dasharray", "3,3")
+                            .style("opacity", 0.3)
+                            .attr("y1", height);
+
+                        focus.append("line")
+                            .attr("class", "x")
+                            .style("stroke", "black")
+                            .style("stroke-dasharray", "3,3")
+                            .style("opacity", 0.3)
+                            .attr("x1", 0);
+
+                        var commitInfo = container.append("div")
+                            .style({
+                                "opacity": 0,
+                                "width": "200px",
+                                "left": width - commitInfoOffset + "px",
+                                "top": - margin.bottom * 2.25 + "px"
+                            })
+                            .attr("class", "commitInfo");
+
+                        if(toggleBilingualLines) {
+                            var toggleContainer = langInfoBox.append("div")
+                                .attr("class", "toggleBilingualLines")
+                            var toggle = toggleContainer.append("input")
+                                .attr({
+                                    "type": "checkbox",
+                                    "name": "toggleBilingual",
+                                    "checked": "true"
+                                });
+                            toggleContainer.append("label")
+                                .attr("for", "toggleBilingual")
+                                .text("Show pair development");
+
+                            toggle.on("change", function () {
+                                var showBilingual = d3.select(this).node().checked;
+                                d3.selectAll('.moduleLine, .modulePoints').each(function (e) {
+                                    if((showBilingual && e.name.indexOf('-') > -1) || e.name.indexOf('-') === -1)
+                                        d3.select(this).transition().style("opacity", 1);
+                                    else
+                                        d3.select(this).transition().style("opacity", 0);
+                                });
+                            });
+                        }
+
+                        d3.json("/json/" + langData.lang + ".json", function (error, modules) {
+                            modules.forEach(function (module) {
+                                module.history.forEach(function (d) {
+                                    d.date = new Date(d.date);
+                                    d.stems = +d.stems;
+                                });
+                                module.history = module.history.sort(function (a, b) {  return a.date - b.date; });
                             });
 
-                            commits = commits.sort(function (a, b) {  return a.date - b.date; });
+                            color.domain(modules.map(function (module) { return module.name; }));
+                            x.domain(d3.extent([].concat.apply([], modules.map(function (module) { return d3.extent(module.history, function (d) { return d.date; }) }))));
+                            y.domain([0, d3.max(modules, function (module) { return d3.max(module.history, function (d) { return d.stems }); }) * 1.1]);
 
-                            x.domain(d3.extent(commits, function (d) { return d.date; }));
-                            y.domain([0, d3.max(commits, function (d) { return d.stems; }) * 1.1]);
+                            var moduleLine = svg.selectAll(".moduleLine")
+                                .data(modules)
+                                .enter().append("g")
+                                    .attr("class", "moduleLine")
+                                    .attr("data-name", function (d) { return d.name; });
 
-                            lineSvg.append("path")
+                            moduleLine.append("path")
                                 .attr("class", "line")
-                                .attr("d", valueline(commits));
+                                .attr("d", function (d) { return valueline(d.history); })
+                                .style("stroke", function (d) { return color(d.name); });
 
-                            focus.append("circle")
-                                .attr("class", "commitFocus")
-                                .attr("r", 4);
+                            moduleLine.append("text")
+                                .datum(function (d) { return {name: d.name, value: d.history[d.history.length - 1]}; })
+                                .attr("transform", function (d) { return "translate(" + x(d.value.date) + "," + y(d.value.stems) + ")"; })
+                                .attr("x", 3)
+                                .attr("dy", "-.75em")
+                                .attr("dx", "-1.5em")
+                                .text(function (d) { return d.name.indexOf('-') > -1 ? codeToName(d.name.split('-')[0]) + '-' + codeToName(d.name.split('-')[1]) : codeToName(d.name); })
+                                .style("fill", function (d) { return color(d.name); })
+                                .style("font-weight", "bold");
 
-                            focus.append("line")
-                                .attr("class", "y")
-                                .style("stroke", "black")
-                                .style("stroke-dasharray", "3,3")
-                                .style("opacity", 0.3)
-                                .attr("y1", height);
+                            var modulePoints = svg.selectAll(".modulePoints")
+                                .data(modules)
+                                .enter().append("g")
+                                    .attr("class", "modulePoints");
 
-                            focus.append("line")
-                                .attr("class", "x")
-                                .style("stroke", "black")
-                                .style("stroke-dasharray", "3,3")
-                                .style("opacity", 0.3)
-                                .attr("x1", 0);
-
-                            var commitInfo = container.append("div")
-                                .style({
-                                    "opacity": 0,
-                                    "width": "200px",
-                                    "left": width - commitInfoOffset + "px",
-                                    "top": - margin.bottom * 2.25 + "px"
-                                })
-                                .attr("class", "commitInfo");
-
-                            svg.selectAll("dot")
-                                    .data(commits)
+                            modulePoints.selectAll(".dot")
+                                .data(function (d) { return d.history; })
                                 .enter().append("circle")
                                     .attr("r", 3)
-                                    .attr("fill", "#d94801")
+                                    .attr("class", "dot")
+                                    .attr("fill", function (d) { return d3.rgb(color(d3.select(this.parentNode).datum().name)).darker(); })
                                     .attr("cx", function (d) { return x(d.date); })
                                     .attr("cy", function (d) { return y(d.stems); })
                                     .style("pointer-events", "all")
                                     .style("cursor", "pointer")
                                     .on("mouseout", function () {
                                         focus.transition().style("opacity", 0);
-                                        commitInfo.transition().style("opacity", 0);
+                                        commitInfo.style("z-index", "1").transition().style("opacity", 0);
                                     })
                                     .on("mouseover", function (d) {
+                                        var brighterColor = d3.rgb(color(d3.select(this.parentNode).datum().name)).brighter();
+
                                         focus.select("circle.commitFocus")
-                                            .attr("transform", "translate(" + x(d.date) + "," + y(d.stems) + ")");
+                                            .attr("transform", "translate(" + x(d.date) + "," + y(d.stems) + ")")
+                                            .style("stroke", brighterColor);
                                         focus.select("line.y")
                                             .attr("x1", x(d.date))
                                             .attr("x2", x(d.date))
@@ -805,7 +851,7 @@
                                         focus.transition().style("opacity", 1);
 
                                         commitInfo.html(d.stems + " stems @ " + "r" + d.rev + " by " + d.author + "<br>" + d.date.toUTCString())
-                                        commitInfo.transition().style("opacity", 1);
+                                        commitInfo.style("z-index", "10000").transition().style("opacity", 1);
                                     })
                                     .on("dblclick", function (d) {
                                         d3.event.preventDefault();
@@ -821,7 +867,16 @@
 
                             svg.append("g")
                                 .attr("class", "y axis")
-                                .call(yAxis);
+                                .call(yAxis)
+                                .append("text")
+                                    .attr("transform", "rotate(-90)")
+                                    .attr("y", 6)
+                                    .attr("dy", ".71em")
+                                    .style("text-anchor", "end")
+                                    .style("font-weight", "bold")
+                                    .style("font-variant", "small-caps")
+                                    .style("font-size", labelFontSize)
+                                    .text("stems in dictionary");
                         });
 
                         if(transition)
