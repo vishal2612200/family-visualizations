@@ -44,7 +44,7 @@ doc.css("logentry").each do |logentry|
         `rm /tmp/#{lang}.#{rev}.#{format}`
         added += 1
     end
-    puts stems.to_json
+    #puts stems.to_json
 end
 
 if added > 0
