@@ -82,6 +82,12 @@
                 bottom: 1em;
             }
 
+            .toggleBilingualLinesSmall {
+                position: absolute;
+                left: 40%;
+                bottom: 1.75em;
+            }
+
             .arc path {
                 stroke: whitesmoke;
                 stroke-width: 3px;
@@ -359,6 +365,7 @@
                         .on("click", closeLangInfoBox);
 
                     var udhrExcerpt = langInfoBox.append("p")
+                        .style("height", "2.5em")
                         .text(udhrText[langData.lang]);
 
                     var height = (diameter * 5 / 6 - $(langInfoBoxTitle[0]).height() - $(udhrExcerpt[0]).height() - 60) / 2,
@@ -707,7 +714,7 @@
                         return container.select("svg");
                     }
 
-                    function drawDevelopmentPlot(container, width, height, margin, xTicks, yTicks, labelFontSize, moduleLabelFontSize, commitInfoHorizOffset, commitInfoVertOffset, fullCommitInfo, transition, toggleBilingualLines) {
+                    function drawDevelopmentPlot(container, width, height, margin, xTicks, yTicks, labelFontSize, moduleLabelFontSize, commitInfoHorizOffset, commitInfoVertOffset, fullCommitInfo, transition) {
                         width = width - margin.left - margin.right,
                         height = height - margin.top - margin.bottom;
 
@@ -773,7 +780,7 @@
                             })
                             .attr("class", "commitInfo");
 
-                        if(toggleBilingualLines) {
+                        if(fullCommitInfo) {
                             var toggleContainer = langInfoBox.append("div")
                                 .attr("class", "toggleBilingualLines")
                             var toggle = toggleContainer.append("input")
@@ -786,17 +793,35 @@
                             toggleContainer.append("label")
                                 .attr("for", "toggleBilingual")
                                 .text("Show pair development");
-
-                            toggle.on("change", function () {
-                                var showBilingual = d3.select(this).node().checked;
-                                d3.selectAll('.moduleLine, .modulePoints').each(function (e) {
-                                    if((showBilingual && e.name.indexOf('-') > -1) || e.name.indexOf('-') === -1)
-                                        d3.select(this).transition().style("opacity", 1);
-                                    else
-                                        d3.select(this).transition().style("opacity", 0);
-                                });
-                            });
                         }
+                        else {
+                            var toggleContainer = container.append("div")
+                                .attr("class", "toggleBilingualLinesSmall")
+                            var toggle = toggleContainer.append("input")
+                                .attr({
+                                    "type": "checkbox",
+                                    "name": "toggleBilingual",
+                                    "id": "toggleBilingual",
+                                    "checked": "true"
+                                });
+                            toggleContainer.append("label")
+                                .attr("for", "toggleBilingual")
+                                .text("Pairs");
+                        }
+
+                        toggle.on("change", function () {
+                            var showBilingual = d3.select(this).node().checked;
+                            d3.selectAll('.moduleLine, .modulePoints').each(function (e) {
+                                if((showBilingual && e.name.indexOf('-') > -1) || e.name.indexOf('-') === -1)
+                                    d3.select(this).transition().style("opacity", 1);
+                                else
+                                    d3.select(this).transition().style("opacity", 0);
+                            });
+                        });
+
+                        toggle.on("click", function () {
+                            d3.event.stopPropagation();
+                        });
 
                         var loadingIndicator = svg.append("foreignObject")
                             .attr("width", width)
@@ -808,7 +833,7 @@
                                     "font-size": "2em",
                                     "top": (height - margin.bottom) / 2 + "px",
                                     "left": (width - margin.left * 1.5 - margin.right * 1.5) / 4 + "px",
-                                    "opacity": .75
+                                    "opacity": .6
                                 })
                                     .append("i")
                                         .attr("class", "fa fa-spinner fa-spin fa-4x");
@@ -829,8 +854,7 @@
                             var moduleLine = svg.selectAll(".moduleLine")
                                 .data(modules)
                                 .enter().append("g")
-                                    .attr("class", "moduleLine")
-                                    .attr("data-name", function (d) { return d.name; });
+                                    .attr("class", "moduleLine");
 
                             moduleLine.append("path")
                                 .attr("class", "line")
