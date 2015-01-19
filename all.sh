@@ -1,15 +1,15 @@
-ruby overtime.rb incubator sah ./json/sah.json
-ruby overtime.rb incubator uig ./json/uig.json
-ruby overtime.rb incubator crh ./json/crh.json
-ruby overtime.rb incubator tyv ./json/tyv.json
-ruby overtime.rb incubator aze ./json/aze.json
-ruby overtime.rb languages chv ./json/chv.json
-ruby overtime.rb languages tat ./json/tat.json
-ruby overtime.rb languages tur ./json/tur.json
-ruby overtime.rb languages kum ./json/kum.json
-ruby overtime.rb languages kaa ./json/kaa.json
-ruby overtime.rb languages uzb ./json/uzb.json
-ruby overtime.rb languages bak ./json/bak.json
-ruby overtime.rb languages nog ./json/nog.json
-ruby overtime.rb languages tuk ./json/tuk.json
-ruby overtime.rb languages kaz ./json/kaz.json
+ruby overtime.rb incubator sah lexc ./json/sah.json
+ruby overtime.rb incubator uig lexc ./json/uig.json
+ruby overtime.rb incubator crh lexc ./json/crh.json
+ruby overtime.rb incubator tyv lexc ./json/tyv.json
+ruby overtime.rb incubator aze lexc ./json/aze.json
+ruby overtime.rb languages chv lexc ./json/chv.json
+ruby overtime.rb languages tat lexc ./json/tat.json
+ruby overtime.rb languages tur lexc ./json/tur.json
+ruby overtime.rb languages kum lexc ./json/kum.json
+ruby overtime.rb languages kaa lexc ./json/kaa.json
+ruby overtime.rb languages uzb lexc ./json/uzb.json
+ruby overtime.rb languages bak lexc ./json/bak.json
+ruby overtime.rb languages nog lexc ./json/nog.json
+ruby overtime.rb languages tuk lexc ./json/tuk.json
+ruby overtime.rb languages kaz lexc ./json/kaz.json
