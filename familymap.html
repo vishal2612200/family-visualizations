@@ -390,7 +390,7 @@
 
                         drawContributionsDonut(d3.select(chartPreviews[0][0]), width - 15, height - 15, 10, 65, "1em", ".9em", ".85em");
                         drawPairGraph(d3.select(chartPreviews[0][1]), width - 15, height - 15, "1em", [5, 30], [5, 15]);
-                        drawDevelopmentPlot(d3.select(chartPreviews[0][2]), width - 15, height - 15, {top: 30, right: 40, bottom: 40, left: 60}, 3, 5, "1.5em", ".7em", 150);
+                        drawDevelopmentPlot(d3.select(chartPreviews[0][2]), width - 15, height - 15, {top: 30, right: 40, bottom: 40, left: 60}, 3, 5, "1.5em", ".6em", 150);
 
                         return chartPreviews;
                     }
@@ -816,12 +816,27 @@
                                 .datum(function (d) { return {name: d.name, value: d.history[d.history.length - 1]}; })
                                 .attr("transform", function (d) { return "translate(" + x(d.value.date) + "," + y(d.value.stems) + ")"; })
                                 .attr("x", 3)
-                                .attr("dy", "-.75em")
+                                .attr("dy", function (d) { return d.name.indexOf('-') > -1 ? "-1.5em" : "-.75em" })
                                 .attr("dx", "-1.5em")
-                                .text(function (d) { return d.name.indexOf('-') > -1 ? codeToName(d.name.split('-')[0]) + '-' + codeToName(d.name.split('-')[1]) : codeToName(d.name); })
+                                .text(function (d) { return d.name.indexOf('-') > -1 ? codeToName(d.name.split('-')[0]) + '-' : codeToName(d.name); })
                                 .style("fill", function (d) { return color(d.name); })
                                 .style("font-size", moduleLabelFontSize)
-                                .style("font-weight", "bold");
+                                .style("font-weight", "bold")
+                                .style("stroke", "lightgray")
+                                .style("stroke-width", ".7px");
+                            
+                            moduleLine.append("text")
+                                .datum(function (d) { return {name: d.name, value: d.history[d.history.length - 1]}; })
+                                .attr("transform", function (d) { return "translate(" + x(d.value.date) + "," + y(d.value.stems) + ")"; })
+                                .attr("x", 3)
+                                .attr("dy", "-.5em")
+                                .attr("dx", "-1.5em")
+                                .text(function (d) { return d.name.indexOf('-') > -1 ? codeToName(d.name.split('-')[1]) : null; })
+                                .style("fill", function (d) { return color(d.name); })
+                                .style("font-size", moduleLabelFontSize)
+                                .style("font-weight", "bold")
+                                .style("stroke", "lightgray")
+                                .style("stroke-width", ".7px");
 
                             var modulePoints = svg.selectAll(".modulePoints")
                                 .data(modules)
