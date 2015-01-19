@@ -10,8 +10,8 @@ doc = Nokogiri::XML(log)
 
 if outputfile && File.exist?(outputfile)
     all = JSON.parse(File.read(outputfile))
-    if all && all.any? { |e| e[:name] == lang }
-        stems = (all.select { |e| e[:name] == lang })[0]['history']
+    if all && all.any? { |e| e['name'] == lang }
+        stems = (all.select { |e| e['name'] == lang })[0]['history']
         revs = stems.map { |entry| entry['rev'] }
     else
         stems = []
