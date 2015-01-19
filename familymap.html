@@ -138,6 +138,7 @@
                 -moz-border-radius: 10px;
                 border-radius: 10px;
                 padding: 3px;
+                z-index: 10000;
             }
         </style>
 
@@ -353,7 +354,7 @@
                     var chartFunctions = {
                         1: function () { return drawContributionsDonut(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, 10, 130, "1.5em", "1.5em", "1.17em", true, true); },
                         2: function () { return drawPairGraph(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, "1.75em", [25, 70], [10, 35], true); },
-                        3: function () { return drawDevelopmentPlot(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, {top: 20, right: 30, bottom: 60, left: 70}, 5, 6, "2em", 0, true, true); },
+                        3: function () { return drawDevelopmentPlot(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, {top: 20, right: 30, bottom: 60, left: 70}, 5, 6, "2em", 40, true, true); },
                         4: function () { alert("Coming soon!"); }
                     };
 
@@ -780,7 +781,7 @@
                             });
                         }
 
-                        d3.json("/json/" + langData.lang + ".json", function (error, modules) {
+                        d3.json("./json/" + langData.lang + ".json", function (error, modules) {
                             modules.forEach(function (module) {
                                 module.history.forEach(function (d) {
                                     d.date = new Date(d.date);
@@ -831,7 +832,7 @@
                                     .style("cursor", "pointer")
                                     .on("mouseout", function () {
                                         focus.transition().style("opacity", 0);
-                                        commitInfo.style("z-index", "1").transition().style("opacity", 0);
+                                        commitInfo.style("display", "none").transition().style("opacity", 0);
                                     })
                                     .on("mouseover", function (d) {
                                         var brighterColor = d3.rgb(color(d3.select(this.parentNode).datum().name)).brighter();
@@ -851,7 +852,7 @@
                                         focus.transition().style("opacity", 1);
 
                                         commitInfo.html(d.stems + " stems @ " + "r" + d.rev + " by " + d.author + "<br>" + d.date.toUTCString())
-                                        commitInfo.style("z-index", "10000").transition().style("opacity", 1);
+                                        commitInfo.style("display", "block").transition().style("opacity", 1);
                                     })
                                     .on("dblclick", function (d) {
                                         d3.event.preventDefault();
