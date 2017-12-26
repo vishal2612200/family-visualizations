@@ -13,3 +13,8 @@ ruby overtime.rb languages bak lexc ./json/bak.json
 ruby overtime.rb languages nog lexc ./json/nog.json
 ruby overtime.rb languages tuk lexc ./json/tuk.json
 ruby overtime.rb languages kaz lexc ./json/kaz.json
+ruby overtime.rb languages alt lexc ./json/kaz.json
+ruby overtime.rb languages cjs lexc ./json/kaz.json
+ruby overtime.rb languages krc lexc ./json/kaz.json
+ruby overtime.rb languages nog lexc ./json/kaz.json
+ruby overtime.rb languages gag lexc ./json/kaz.json
