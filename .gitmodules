@@ -1,0 +1,3 @@
+[submodule "Apertium-Global-PairViewer"]
+	path = Apertium-Global-PairViewer
+	url = https://github.com/jonorthwash/Apertium-Global-PairViewer
