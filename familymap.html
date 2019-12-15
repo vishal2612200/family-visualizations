@@ -378,7 +378,7 @@
                         1: function () { return drawContributionsDonut(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, 10, 130, "1.5em", "1.5em", "1.17em", true, true); },
                         2: function () { return drawPairGraph(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, "1.75em", [25, 70], [10, 35], true); },
                         3: function () { return drawDevelopmentPlot(langInfoBox, diameter * 5 / 6, diameter * 3 / 4, {top: 20, right: 50, bottom: 60, left: 70}, 5, 6, "2em", "1em", 40, 80, true, true, true); },
-                        4: function () { alert("Coming soon!"); }
+                        4: function () { return drawGlobeViewer(langInfoBox, diameter * 5 / 6, diameter * 7 / 10); }
                     };
 
                     function drawChartPreviews() {
@@ -408,6 +408,7 @@
                         drawContributionsDonut(d3.select(chartPreviews[0][0]), width - 15, height - 15, 10, 65, "1em", ".9em", ".85em");
                         drawPairGraph(d3.select(chartPreviews[0][1]), width - 15, height - 15, "1em", [5, 30], [5, 15]);
                         drawDevelopmentPlot(d3.select(chartPreviews[0][2]), width - 15, height - 15, {top: 30, right: 40, bottom: 40, left: 60}, 3, 5, "1.5em", ".6em", 150, 40);
+                        drawGlobeViewer(d3.select(chartPreviews[0][3]), width - 15, height - 15)
 
                         return chartPreviews;
                     }
@@ -955,6 +956,24 @@
                                 .style("opacity", 1);
 
                         return container.select("svg");
+                    }
+
+                    function drawGlobeViewer(container, width, height) {
+
+                        var globeView = container.append("object")
+                            .attr("width", width)
+                            .attr("height", height)
+                            .attr("data", "Apertium-Global-PairViewer/index.html")
+                            .style("opacity", 1);
+
+
+                        globeView.on("load", function(){
+                          setTimeout(function(){
+                            globeView[0][0].contentWindow.filterPoint(langData.lang);
+                          }, 0);
+                        })
+
+                        return globeView;
                     }
                 });
 
