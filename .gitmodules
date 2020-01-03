@@ -1,3 +1,120 @@
 [submodule "Apertium-Global-PairViewer"]
 	path = Apertium-Global-PairViewer
 	url = https://github.com/jonorthwash/Apertium-Global-PairViewer
+[submodule "scrapers/git-repos/apertium-chv"]
+	path = scrapers/git-repos/apertium-chv
+	url = https://github.com/apertium/apertium-chv
+[submodule "scrapers/git-repos/apertium-kir"]
+	path = scrapers/git-repos/apertium-kir
+	url = https://github.com/apertium/apertium-kir
+[submodule "scrapers/git-repos/apertium-tur-aze"]
+	path = scrapers/git-repos/apertium-tur-aze
+	url = https://github.com/apertium/apertium-tur-aze
+[submodule "scrapers/git-repos/apertium-tat-bak"]
+	path = scrapers/git-repos/apertium-tat-bak
+	url = https://github.com/apertium/apertium-tat-bak
+[submodule "scrapers/git-repos/apertium-chv-tat"]
+	path = scrapers/git-repos/apertium-chv-tat
+	url = https://github.com/apertium/apertium-chv-tat
+[submodule "scrapers/git-repos/apertium-chv-tur"]
+	path = scrapers/git-repos/apertium-chv-tur
+	url = https://github.com/apertium/apertium-chv-tur
+[submodule "scrapers/git-repos/apertium-crh-tur"]
+	path = scrapers/git-repos/apertium-crh-tur
+	url = https://github.com/apertium/apertium-crh-tur
+[submodule "scrapers/git-repos/apertium-kaz-kaa"]
+	path = scrapers/git-repos/apertium-kaz-kaa
+	url = https://github.com/apertium/apertium-kaz-kaa
+[submodule "scrapers/git-repos/apertium-uzb-kaa"]
+	path = scrapers/git-repos/apertium-uzb-kaa
+	url = https://github.com/apertium/apertium-uzb-kaa
+[submodule "scrapers/git-repos/apertium-tat-kaa"]
+	path = scrapers/git-repos/apertium-tat-kaa
+	url = https://github.com/apertium/apertium-tat-kaa
+[submodule "scrapers/git-repos/apertium-kaz-sah"]
+	path = scrapers/git-repos/apertium-kaz-sah
+	url = https://github.com/apertium/apertium-kaz-sah
+[submodule "scrapers/git-repos/apertium-aze"]
+	path = scrapers/git-repos/apertium-aze
+	url = https://github.com/apertium/apertium-aze
+[submodule "scrapers/git-repos/apertium-kaz-tyv"]
+	path = scrapers/git-repos/apertium-kaz-tyv
+	url = https://github.com/apertium/apertium-kaz-tyv
+[submodule "scrapers/git-repos/apertium-kaz-uig"]
+	path = scrapers/git-repos/apertium-kaz-uig
+	url = https://github.com/apertium/apertium-kaz-uig
+[submodule "scrapers/git-repos/apertium-kaz-tur"]
+	path = scrapers/git-repos/apertium-kaz-tur
+	url = https://github.com/apertium/apertium-kaz-tur
+[submodule "scrapers/git-repos/apertium-nog-kaz"]
+	path = scrapers/git-repos/apertium-nog-kaz
+	url = https://github.com/apertium/apertium-nog-kaz
+[submodule "scrapers/git-repos/apertium-kaz-kum"]
+	path = scrapers/git-repos/apertium-kaz-kum
+	url = https://github.com/apertium/apertium-kaz-kum
+[submodule "scrapers/git-repos/apertium-bak"]
+	path = scrapers/git-repos/apertium-bak
+	url = https://github.com/apertium/apertium-bak
+[submodule "scrapers/git-repos/apertium-kaz-kir"]
+	path = scrapers/git-repos/apertium-kaz-kir
+	url = https://github.com/apertium/apertium-kaz-kir
+[submodule "scrapers/git-repos/apertium-crh"]
+	path = scrapers/git-repos/apertium-crh
+	url = https://github.com/apertium/apertium-crh
+[submodule "scrapers/git-repos/apertium-kaa"]
+	path = scrapers/git-repos/apertium-kaa
+	url = https://github.com/apertium/apertium-kaa
+[submodule "scrapers/git-repos/apertium-kaz-tat"]
+	path = scrapers/git-repos/apertium-kaz-tat
+	url = https://github.com/apertium/apertium-kaz-tat
+[submodule "scrapers/git-repos/apertium-kir-uzb"]
+	path = scrapers/git-repos/apertium-kir-uzb
+	url = https://github.com/apertium/apertium-kir-uzb
+[submodule "scrapers/git-repos/apertium-tat-kir"]
+	path = scrapers/git-repos/apertium-tat-kir
+	url = https://github.com/apertium/apertium-tat-kir
+[submodule "scrapers/git-repos/apertium-kaz"]
+	path = scrapers/git-repos/apertium-kaz
+	url = https://github.com/apertium/apertium-kaz
+[submodule "scrapers/git-repos/apertium-tur-kir"]
+	path = scrapers/git-repos/apertium-tur-kir
+	url = https://github.com/apertium/apertium-tur-kir
+[submodule "scrapers/git-repos/apertium-kjh"]
+	path = scrapers/git-repos/apertium-kjh
+	url = https://github.com/apertium/apertium-kjh
+[submodule "scrapers/git-repos/apertium-kum"]
+	path = scrapers/git-repos/apertium-kum
+	url = https://github.com/apertium/apertium-kum
+[submodule "scrapers/git-repos/apertium-nog"]
+	path = scrapers/git-repos/apertium-nog
+	url = https://github.com/apertium/apertium-nog
+[submodule "scrapers/git-repos/apertium-tur-tat"]
+	path = scrapers/git-repos/apertium-tur-tat
+	url = https://github.com/apertium/apertium-tur-tat
+[submodule "scrapers/git-repos/apertium-sah"]
+	path = scrapers/git-repos/apertium-sah
+	url = https://github.com/apertium/apertium-sah
+[submodule "scrapers/git-repos/apertium-tat"]
+	path = scrapers/git-repos/apertium-tat
+	url = https://github.com/apertium/apertium-tat
+[submodule "scrapers/git-repos/apertium-tuk"]
+	path = scrapers/git-repos/apertium-tuk
+	url = https://github.com/apertium/apertium-tuk
+[submodule "scrapers/git-repos/apertium-tur"]
+	path = scrapers/git-repos/apertium-tur
+	url = https://github.com/apertium/apertium-tur
+[submodule "scrapers/git-repos/apertium-tyv"]
+	path = scrapers/git-repos/apertium-tyv
+	url = https://github.com/apertium/apertium-tyv
+[submodule "scrapers/git-repos/apertium-uig"]
+	path = scrapers/git-repos/apertium-uig
+	url = https://github.com/apertium/apertium-uig
+[submodule "scrapers/git-repos/apertium-uzb"]
+	path = scrapers/git-repos/apertium-uzb
+	url = https://github.com/apertium/apertium-uzb
+[submodule "scrapers/git-repos/apertium-tur-uzb"]
+	path = scrapers/git-repos/apertium-tur-uzb
+	url = https://github.com/apertium/apertium-tur-uzb
+[submodule "scrapers/git-repos/apertium-uig-tur"]
+	path = scrapers/git-repos/apertium-uig-tur
+	url = https://github.com/apertium/apertium-uig-tur
