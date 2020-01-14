@@ -174,7 +174,7 @@
                 githubRoot = "https://github.com/apertium/";
 
             var transducers, pairs;
-            d3.json("./json/pairData.json", function(error, data) {
+            d3.json("./json/turkic_pairData.json", function(error, data) {
               pairs = data;
             })
 
@@ -988,7 +988,7 @@
             }
 
             $(document).ready(function () {
-                d3.json("./json/transducers.json", function(error, data) {
+                d3.json("./json/turkic_transducers.json", function(error, data) {
                   transducers = data;
                   createChart();
                 })
