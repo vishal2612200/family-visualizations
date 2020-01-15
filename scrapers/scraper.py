@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""Usage: python3 <name>.py [-s] [-u] [-v ][-f FAMILY]
+"""Usage: python3 <name>.py [-s] [-u] [-v] [-q] FAMILY
    Output: Outputs data (necessary for the family visualizer) for languages in FAMILY to json files
 """
 
@@ -11,6 +10,7 @@ import argparse
 import re
 import logging
 import json
+import os
 import subprocess
 import shutil
 import requests
@@ -23,7 +23,7 @@ ROOT_DIR = SCRAPERS_DIR.parent
 JSON_DIR = ROOT_DIR.joinpath("json")
 REPOS_DIR = SCRAPERS_DIR.joinpath("git-repos")
 
-iso3to1 = json.load(open(JSON_DIR.joinpath("iso3to1.json"), "r"))
+iso3to2 = json.load(open(SCRAPERS_DIR.joinpath("iso3to2.json"), "r"))
 
 pairLocations = ["incubator", "nursery", "staging", "trunk"]
 langLocations = ["languages", "incubator"]
@@ -34,31 +34,16 @@ def rmPrefix(word):
     return word[len("apertium-") :]
 
 
-def updateRepos():
-    """Updates and cleans all repo dirs"""
-    subprocess.call(
-        ["git", "submodule", "update", "--init", "--recursive", "--quiet", "--force",],
-        cwd=ROOT_DIR,
-    )
-    for repo in sorted(REPOS_DIR.glob("*")):
-        subprocess.call(
-            ["git", "clean", "-xfdf", "--quiet",], cwd=repo,
-        )
-
-
 def prepRepo(repo):
-    """Adds repo if it doesn't exist and copies .mailmap to it"""
+    """Adds repo if it doesn't exist, or updates it if does, and copies .mailmap to it"""
     if not REPOS_DIR.joinpath(repo).exists():
         subprocess.call(
-            [
-                "git",
-                "submodule",
-                "add",
-                "--force",
-                "--quiet",
-                "https://github.com/apertium/{}".format(repo),
-            ],
+            ["git", "clone", "--quiet", "https://github.com/apertium/{}".format(repo),],
             cwd=REPOS_DIR,
+        )
+    else:
+        subprocess.call(
+            ["git", "pull", "--force", "--quiet",], cwd=repo,
         )
     shutil.copyfile(
         SCRAPERS_DIR.joinpath(".mailmap"), REPOS_DIR.joinpath(repo, ".mailmap"),
@@ -125,7 +110,7 @@ def monoHistory(language):
         dataFile = requests.get(fileURL)
         if not dataFile:
             fileURL = "https://raw.githubusercontent.com/apertium/apertium-{0}/{1}/apertium-{0}.{0}.{2}".format(
-                iso3to1[language], commitData["sha"], extension
+                iso3to2[language], commitData["sha"], extension
             )
             dataFile = requests.get(fileURL)
 
@@ -156,7 +141,7 @@ def monoHistory(language):
     return {"name": language, "history": history}
 
 
-def pairHistory(language, languages, packages):
+def pairHistory(language, languages, packages, quiet):
     """Returns the history of all pairs of a language"""
     langPackages = []
     for package in packages:
@@ -173,6 +158,9 @@ def pairHistory(language, languages, packages):
             not set(pairList) <= set(languages) or pairName == "ita-srd"
         ):  # This repo exists as srd-ita and ita-srd is empty
             continue
+
+        if not quiet:
+            print("Getting commits for {}...".format(dirName), flush=True)
 
         prepRepo(dirName)
         dixName = (
@@ -222,7 +210,7 @@ def pairHistory(language, languages, packages):
             )
             stems = countDixStems(dixFile, True)
             if stems == -1:
-                dixName = iso3to1[pairList[0]] + "-" + iso3to1[pairList[1]]
+                dixName = iso3to2[pairList[0]] + "-" + iso3to2[pairList[1]]
                 dixFile = "https://raw.githubusercontent.com/apertium/apertium-{0}/{2}/apertium-{1}.{1}.dix".format(
                     pairName, dixName, commitData["sha"]
                 )
@@ -263,11 +251,17 @@ def monoData(packages, languages, langFamily, updatemailmap):
         else:
             fileType = "metamonodix"  # extension is metadix, but type is metamonodix
 
-        stats = requests.get(
-            "https://apertium.projectjj.com/stats-service/{}/{}".format(
-                dirName, fileType
+        try:
+            stats = requests.get(
+                "https://apertium.projectjj.com/stats-service/{}/{}/".format(
+                    dirName, fileType
+                )
+            ).json()["stats"]
+        except KeyError:
+            raise Exception(
+                "The stats-service seems to be updating at the moment. Please try again later"
             )
-        ).json()["stats"]
+            # Raises an exception because the script can't continue
         for statistic in stats:
             if statistic["stat_kind"] == "Stems":
                 stems = statistic["value"]
@@ -366,11 +360,18 @@ def pairData(packages, languages):
                 location = rmPrefix(topic)
                 break
 
-        stats = requests.get(
-            "https://apertium.projectjj.com/stats-service/apertium-{}/bidix".format(
-                pairName
+        try:
+            stats = requests.get(
+                "https://apertium.projectjj.com/stats-service/apertium-{}/bidix".format(
+                    pairName
+                )
+            ).json()["stats"]
+        except KeyError:
+            raise Exception(
+                "The stats-service seems to be updating at the moment. Please try again later"
             )
-        ).json()["stats"]
+            # Raises an exception because the script can't continue
+
         for statistic in stats:
             if statistic["stat_kind"] == "Entries":
                 stems = statistic["value"]
@@ -397,6 +398,12 @@ if __name__ == "__main__":
         action="store_true",
     )
     parser.add_argument(
+        "-q",
+        "--quiet",
+        help="stop the script from printing status updates",
+        action="store_true",
+    )
+    parser.add_argument(
         "-v",
         "--verbose",
         help="log info about commits where the stems were unable to be counted",
@@ -415,10 +422,16 @@ if __name__ == "__main__":
     logging.getLogger("countStems").disabled = True
 
     family = args.family.lower()
-    families = json.load(open(JSON_DIR.joinpath("families.json"), "r"))
-    langs = families[family]
+    families = json.load(open(SCRAPERS_DIR.joinpath("families.json"), "r"))
+    try:
+        langs = families[family]
+    except KeyError:
+        raise Exception(
+            "The family you specified is not in the families.json file.\nPlease choose another family or add the family to the file"
+        )
 
-    updateRepos()
+    if not REPOS_DIR.exists():
+        os.mkdir(REPOS_DIR)
 
     allPackages = requests.get(
         "https://apertium.projectjj.com/stats-service/packages"
@@ -426,10 +439,14 @@ if __name__ == "__main__":
     pairsFile = open(
         JSON_DIR.joinpath("{}_pairData.json".format(family)), "w+", encoding="utf-8",
     )
+    if not args.quiet:
+        print("Getting pair data for {}...".format(family), flush=True)
     json.dump(pairData(allPackages, langs), pairsFile, ensure_ascii=False)
     langsFile = open(
         JSON_DIR.joinpath("{}_transducers.json".format(family)), "w+", encoding="utf-8",
     )
+    if not args.quiet:
+        print("Getting monolingual data for {}...".format(family), flush=True)
     json.dump(
         monoData(allPackages, langs, family, args.updatemailmap),
         langsFile,
@@ -438,10 +455,13 @@ if __name__ == "__main__":
     if not args.shallow:
         for lang in langs:
             langHistory = []
+            if not args.quiet:
+                print(
+                    "Getting commits for apertium-{}...".format(lang), flush=True,
+                )
             langHistory.append(monoHistory(lang))
-            langHistory.extend(pairHistory(lang, langs, allPackages))
+            langHistory.extend(pairHistory(lang, langs, allPackages, args.quiet))
             outputFile = open(
                 JSON_DIR.joinpath("{}.json".format(lang)), "w+", encoding="utf-8",
             )
             json.dump(langHistory, outputFile, ensure_ascii=False)
-    updateRepos()  # Removes .mailmap from repos
