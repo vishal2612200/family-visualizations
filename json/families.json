@@ -1,0 +1,93 @@
+{
+    "turkic": [
+        "aze",
+        "bak",
+        "chv",
+        "crh",
+        "kaa",
+        "kaz",
+        "kir",
+        "kjh",
+        "kum",
+        "nog",
+        "sah",
+        "tat",
+        "tuk",
+        "tur",
+        "tyv",
+        "uig",
+        "uzb"
+    ],
+    "romance": [
+        "arg",
+        "ast",
+        "cat",
+        "cos",
+        "fra",
+        "glg",
+        "ita",
+        "oci",
+        "por",
+        "ron",
+        "rup",
+        "scn",
+        "spa",
+        "srd"
+    ],
+    "germanic": [
+        "afr",
+        "dan",
+        "deu",
+        "eng",
+        "fao",
+        "isl",
+        "nld",
+        "nno",
+        "nob",
+        "sco",
+        "swe",
+        "yid"
+    ],
+    "slavic": [
+        "hbs",
+        "slv",
+        "mkd",
+        "ces",
+        "rus",
+        "bul",
+        "pol",
+        "ukr",
+        "slk",
+        "bel",
+        "dsb",
+        "hsb"
+    ],
+    "semitic": [
+      "ara",
+      "heb",
+      "mlt"
+    ],
+    "indic": [
+      "ben",
+      "hin",
+      "mar",
+      "san",
+      "sin",
+      "urd"
+    ],
+    "celtic": [
+      "bre",
+      "cym",
+      "gla",
+      "gle",
+      "glv"
+    ],
+    "mongolic": [
+      "bua",
+      "khk"
+    ],
+    "dravidian": [
+      "mal",
+      "tel"
+    ]
+}

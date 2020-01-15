@@ -1,8 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Usage: python <name>.py [-s] [-u] [-v ][-f FAMILY]
+"""Usage: python3 <name>.py [-s] [-u] [-v ][-f FAMILY]
    Output: Outputs data (necessary for the family visualizer) for languages in FAMILY to json files
-   Defaults to scraping Turkic languages, but can be changed with the -f argument
 """
 
 from collections import Counter
@@ -21,282 +20,10 @@ from dixcounter import get_info as countDixStems
 
 SCRAPERS_DIR = Path(__file__).absolute().parent
 ROOT_DIR = SCRAPERS_DIR.parent
+JSON_DIR = ROOT_DIR.joinpath("json")
 REPOS_DIR = SCRAPERS_DIR.joinpath("git-repos")
 
-languages = []
-
-families = {
-    "turkic": [
-        "aze",
-        "bak",
-        "chv",
-        "crh",
-        "kaa",
-        "kaz",
-        "kir",
-        "kjh",
-        "kum",
-        "nog",
-        "sah",
-        "tat",
-        "tuk",
-        "tur",
-        "tyv",
-        "uig",
-        "uzb",
-    ],
-    "romance": [
-        "arg",
-        "ast",
-        "cat",
-        "cos",
-        "fra",
-        "glg",
-        "ita",
-        "oci",
-        "por",
-        "ron",
-        "rup",
-        "scn",
-        "spa",
-        "srd",
-    ],
-    "germanic": [
-        "afr",
-        "dan",
-        "deu",
-        "eng",
-        "fao",
-        "isl",
-        "nld",
-        "nno",
-        "nob",
-        "sco",
-        "swe",
-        "yid",
-    ],
-    "slavic": [
-        "hbs",
-        "slv",
-        "mkd",
-        "ces",
-        "rus",
-        "bul",
-        "pol",
-        "ukr",
-        "slk",
-        "bel",
-        "dsb",
-        "hsb",
-    ],
-    "semitic": ["ara", "heb", "mlt",],
-    "indic": ["ben", "hin", "mar", "san", "sin", "urd",],
-    "celtic": ["bre", "cym", "gla", "gle", "glv",],
-    "mongolic": ["bua", "khk",],
-    "dravidian": ["mal", "tel",],
-}
-iso3to1 = {
-    "aar": "aa",
-    "abk": "ab",
-    "afr": "af",
-    "aka": "ak",
-    "sqi": "sq",
-    "amh": "am",
-    "ara": "ar",
-    "arg": "an",
-    "hye": "hy",
-    "asm": "as",
-    "ast": "ast",
-    "ava": "av",
-    "ave": "ae",
-    "aym": "ay",
-    "aze": "az",
-    "bak": "ba",
-    "bam": "bm",
-    "eus": "eu",
-    "bel": "be",
-    "ben": "bn",
-    "bih": "bh",
-    "bis": "bi",
-    "bos": "bs",
-    "bre": "br",
-    "bul": "bg",
-    "mya": "my",
-    "cat": "ca",
-    "cha": "ch",
-    "che": "ce",
-    "zho": "zh",
-    "chu": "cu",
-    "chv": "cv",
-    "cor": "kw",
-    "cos": "co",
-    "cre": "cr",
-    "crh": "crh",
-    "ces": "cs",
-    "dan": "da",
-    "div": "dv",
-    "nld": "nl",
-    "dzo": "dz",
-    "eng": "en",
-    "epo": "eo",
-    "est": "et",
-    "ewe": "ee",
-    "fao": "fo",
-    "fij": "fj",
-    "fin": "fi",
-    "fra": "fr",
-    "fry": "fy",
-    "ful": "ff",
-    "kat": "ka",
-    "deu": "de",
-    "gla": "gd",
-    "gle": "ga",
-    "glg": "gl",
-    "glv": "gv",
-    "ell": "el",
-    "grn": "gn",
-    "guj": "gu",
-    "hat": "ht",
-    "hau": "ha",
-    "heb": "he",
-    "her": "hz",
-    "hin": "hi",
-    "hmo": "ho",
-    "hrv": "hr",
-    "hun": "hu",
-    "ibo": "ig",
-    "isl": "is",
-    "ido": "io",
-    "iii": "ii",
-    "iku": "iu",
-    "ile": "ie",
-    "ina": "ia",
-    "ind": "id",
-    "ipk": "ik",
-    "ita": "it",
-    "jav": "jv",
-    "jpn": "ja",
-    "kaa": "kaa",
-    "kal": "kl",
-    "kan": "kn",
-    "kas": "ks",
-    "kau": "kr",
-    "kaz": "kk",
-    "khm": "km",
-    "kik": "ki",
-    "kin": "rw",
-    "kir": "ky",
-    "kom": "kv",
-    "kon": "kg",
-    "kor": "ko",
-    "kua": "kj",
-    "kur": "ku",
-    "lao": "lo",
-    "lat": "la",
-    "lav": "lv",
-    "lim": "li",
-    "lin": "ln",
-    "lit": "lt",
-    "ltz": "lb",
-    "lub": "lu",
-    "lug": "lg",
-    "mkd": "mk",
-    "mah": "mh",
-    "mal": "ml",
-    "mri": "mr",
-    "mar": "mr",
-    "msa": "ms",
-    "mlg": "mg",
-    "mlt": "mt",
-    "mon": "mn",
-    "nau": "na",
-    "nav": "nv",
-    "nbl": "nr",
-    "nde": "nd",
-    "ndo": "ng",
-    "nep": "ne",
-    "nno": "nn",
-    "nob": "nb",
-    "nor": "no",
-    "nya": "ny",
-    "oci": "oc",
-    "oji": "oj",
-    "ori": "or",
-    "orm": "om",
-    "oss": "os",
-    "pan": "pa",
-    "fas": "fa",
-    "pli": "pi",
-    "pol": "pl",
-    "por": "pt",
-    "pus": "ps",
-    "que": "qu",
-    "roh": "rm",
-    "ron": "ro",
-    "run": "rn",
-    "rus": "ru",
-    "sag": "sg",
-    "sah": "sah",
-    "san": "sa",
-    "sin": "si",
-    "hbs": "sh",
-    "slk": "sk",
-    "slv": "sl",
-    "sme": "se",
-    "smo": "sm",
-    "sna": "sn",
-    "snd": "sd",
-    "som": "so",
-    "sot": "st",
-    "spa": "es",
-    "srd": "sc",
-    "srp": "sr",
-    "ssw": "ss",
-    "sun": "su",
-    "swa": "sw",
-    "swe": "sv",
-    "tah": "ty",
-    "tam": "ta",
-    "tat": "tt",
-    "tel": "te",
-    "tgk": "tg",
-    "tgl": "tl",
-    "tha": "th",
-    "bod": "bo",
-    "tir": "ti",
-    "ton": "to",
-    "tsn": "tn",
-    "tso": "ts",
-    "tuk": "tk",
-    "tur": "tr",
-    "twi": "tw",
-    "uig": "ug",
-    "ukr": "uk",
-    "urd": "ur",
-    "uzb": "uz",
-    "ven": "ve",
-    "vie": "vi",
-    "vol": "vo",
-    "cym": "cy",
-    "wln": "wa",
-    "wol": "wo",
-    "xho": "xh",
-    "yid": "yi",
-    "yor": "yo",
-    "zha": "za",
-    "zul": "zu",
-    "kjh": "kjh",
-    "kum": "kum",
-    "nog": "nog",
-    "tyv": "tyv",
-    "scn": "scn",
-    "rup": "rup",
-    "sco": "sco",
-    "hsb": "hsb",
-    "dsb": "dsb",
-    "bua": "bua",
-    "khk": "khk",
-}
+iso3to1 = json.load(open(JSON_DIR.joinpath("iso3to1.json"), "r"))
 
 pairLocations = ["incubator", "nursery", "staging", "trunk"]
 langLocations = ["languages", "incubator"]
@@ -355,9 +82,7 @@ def monoHistory(language):
     """Returns the history of a monolingual dictionary"""
     dirName = "apertium-{}".format(language)
     try:
-        oldFile = json.load(
-            open(ROOT_DIR.joinpath("json", "{}.json".format(language)), "r")
-        )
+        oldFile = json.load(open(JSON_DIR.joinpath("{}.json".format(language)), "r"))
         for data in oldFile:
             if data["name"] == language:
                 history = data["history"]
@@ -431,7 +156,7 @@ def monoHistory(language):
     return {"name": language, "history": history}
 
 
-def pairHistory(language, packages):
+def pairHistory(language, languages, packages):
     """Returns the history of all pairs of a language"""
     langPackages = []
     for package in packages:
@@ -471,7 +196,7 @@ def pairHistory(language, packages):
 
         try:
             oldFile = json.load(
-                open(ROOT_DIR.joinpath("json", "{}.json".format(language)), "r")
+                open(JSON_DIR.joinpath("{}.json".format(language)), "r")
             )
             for data in oldFile:
                 if data["name"] == pairName:
@@ -517,7 +242,7 @@ def pairHistory(language, packages):
     return langPackages
 
 
-def monoData(packages, langFamily, updatemailmap):
+def monoData(packages, languages, langFamily, updatemailmap):
     """Returns data for all monolingual dictionaries: state, stems, location and contributors"""
     data = []
     for package in packages:
@@ -623,7 +348,7 @@ def monoData(packages, langFamily, updatemailmap):
     return data
 
 
-def pairData(packages):
+def pairData(packages, languages):
     """Returns the locations and stems of all specified pairs"""
     data = []
     for package in packages:
@@ -657,7 +382,7 @@ def pairData(packages):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Scrape data necessary for the visualizer of a family, defaulting to scraping for Turkic languages"
+        description="Scrape data necessary for the visualizer of the specified family"
     )
     parser.add_argument(
         "-s",
@@ -690,7 +415,8 @@ if __name__ == "__main__":
     logging.getLogger("countStems").disabled = True
 
     family = args.family.lower()
-    languages = families[family]
+    families = json.load(open(JSON_DIR.joinpath("families.json"), "r"))
+    langs = families[family]
 
     updateRepos()
 
@@ -698,30 +424,24 @@ if __name__ == "__main__":
         "https://apertium.projectjj.com/stats-service/packages"
     ).json()["packages"]
     pairsFile = open(
-        ROOT_DIR.joinpath("json", "{}_pairData.json".format(family)),
-        "w+",
-        encoding="utf-8",
+        JSON_DIR.joinpath("{}_pairData.json".format(family)), "w+", encoding="utf-8",
     )
-    json.dump(pairData(allPackages), pairsFile, ensure_ascii=False)
+    json.dump(pairData(allPackages, langs), pairsFile, ensure_ascii=False)
     langsFile = open(
-        ROOT_DIR.joinpath("json", "{}_transducers.json".format(family)),
-        "w+",
-        encoding="utf-8",
+        JSON_DIR.joinpath("{}_transducers.json".format(family)), "w+", encoding="utf-8",
     )
     json.dump(
-        monoData(allPackages, family, args.updatemailmap),
+        monoData(allPackages, langs, family, args.updatemailmap),
         langsFile,
         ensure_ascii=False,
     )
     if not args.shallow:
-        for lang in languages:
+        for lang in langs:
             langHistory = []
             langHistory.append(monoHistory(lang))
-            langHistory.extend(pairHistory(lang, allPackages))
+            langHistory.extend(pairHistory(lang, langs, allPackages))
             outputFile = open(
-                ROOT_DIR.joinpath("json", "{}.json".format(lang)),
-                "w+",
-                encoding="utf-8",
+                JSON_DIR.joinpath("{}.json".format(lang)), "w+", encoding="utf-8",
             )
             json.dump(langHistory, outputFile, ensure_ascii=False)
     updateRepos()  # Removes .mailmap from repos

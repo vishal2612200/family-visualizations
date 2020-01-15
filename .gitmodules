@@ -277,3 +277,9 @@
 [submodule "scrapers/git-repos/apertium-khk"]
 	path = scrapers/git-repos/apertium-khk
 	url = https://github.com/apertium/apertium-khk
+[submodule "scrapers/git-repos/apertium-mal"]
+	path = scrapers/git-repos/apertium-mal
+	url = https://github.com/apertium/apertium-mal
+[submodule "scrapers/git-repos/apertium-tel"]
+	path = scrapers/git-repos/apertium-tel
+	url = https://github.com/apertium/apertium-tel
