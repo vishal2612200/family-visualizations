@@ -34,16 +34,19 @@ def rmPrefix(word):
     return word[len("apertium-") :]
 
 
-def prepRepo(repo):
+def prepRepo(repo, quiet):
     """Adds repo if it doesn't exist, or updates it if does, and copies .mailmap to it"""
     if not REPOS_DIR.joinpath(repo).exists():
+        if not quiet:
+            print("Cloning {}...".format(repo), flush=True)
+            # Replaces the multi-line git clone status check with a sigle-line message
         subprocess.call(
             ["git", "clone", "--quiet", "https://github.com/apertium/{}".format(repo),],
             cwd=REPOS_DIR,
         )
     else:
         subprocess.call(
-            ["git", "pull", "--force", "--quiet",], cwd=repo,
+            ["git", "pull", "--force", "--quiet",], cwd=REPOS_DIR.joinpath(repo),
         )
     shutil.copyfile(
         SCRAPERS_DIR.joinpath(".mailmap"), REPOS_DIR.joinpath(repo, ".mailmap"),
@@ -63,7 +66,7 @@ def fileExt(repo):
     return "unknown"
 
 
-def monoHistory(language):
+def monoHistory(language, quiet):
     """Returns the history of a monolingual dictionary"""
     dirName = "apertium-{}".format(language)
     try:
@@ -75,7 +78,7 @@ def monoHistory(language):
             history = []
     except (FileNotFoundError, json.decoder.JSONDecodeError):
         history = []
-    prepRepo(dirName)
+    prepRepo(dirName, quiet)
     extension = fileExt(language)
     commits = (
         subprocess.check_output(
@@ -162,7 +165,7 @@ def pairHistory(language, languages, packages, quiet):
         if not quiet:
             print("Getting commits for {}...".format(dirName), flush=True)
 
-        prepRepo(dirName)
+        prepRepo(dirName, quiet)
         dixName = (
             pairName if pairName != "tat-kir" else "tt-ky"
         )  # The tat-kir bidix is still named according to iso639-1 standards
@@ -230,7 +233,7 @@ def pairHistory(language, languages, packages, quiet):
     return langPackages
 
 
-def monoData(packages, languages, langFamily, updatemailmap):
+def monoData(packages, languages, langFamily, updatemailmap, quiet):
     """Returns data for all monolingual dictionaries: state, stems, location and contributors"""
     data = []
     for package in packages:
@@ -242,7 +245,7 @@ def monoData(packages, languages, langFamily, updatemailmap):
 
         dirName = package["name"]
         language = rmPrefix(dirName)
-        prepRepo(dirName)
+        prepRepo(dirName, quiet)
         extension = fileExt(language)
         if extension == "lexc":
             fileType = extension
@@ -288,7 +291,7 @@ def monoData(packages, languages, langFamily, updatemailmap):
                     [
                         "git",
                         "log",
-                        "--format=<%aE> %aN %cI",
+                        "--format=<%aE> %aN %cI %h",
                         "--follow",
                         "apertium-{0}.{0}.{1}".format(language, extension),
                     ],
@@ -440,15 +443,21 @@ if __name__ == "__main__":
         JSON_DIR.joinpath("{}_pairData.json".format(family)), "w+", encoding="utf-8",
     )
     if not args.quiet:
-        print("Getting pair data for {}...".format(family), flush=True)
+        print(
+            "Scraping pair data for {} languages...".format(family.capitalize()),
+            flush=True,
+        )
     json.dump(pairData(allPackages, langs), pairsFile, ensure_ascii=False)
     langsFile = open(
         JSON_DIR.joinpath("{}_transducers.json".format(family)), "w+", encoding="utf-8",
     )
     if not args.quiet:
-        print("Getting monolingual data for {}...".format(family), flush=True)
+        print(
+            "Scraping monolingual data for {} languages...".format(family.capitalize()),
+            flush=True,
+        )
     json.dump(
-        monoData(allPackages, langs, family, args.updatemailmap),
+        monoData(allPackages, langs, family, args.updatemailmap, args.quiet),
         langsFile,
         ensure_ascii=False,
     )
@@ -459,9 +468,10 @@ if __name__ == "__main__":
                 print(
                     "Getting commits for apertium-{}...".format(lang), flush=True,
                 )
-            langHistory.append(monoHistory(lang))
+            langHistory.append(monoHistory(lang, args.quiet))
             langHistory.extend(pairHistory(lang, langs, allPackages, args.quiet))
             outputFile = open(
                 JSON_DIR.joinpath("{}.json".format(lang)), "w+", encoding="utf-8",
             )
             json.dump(langHistory, outputFile, ensure_ascii=False)
+    print("\nSuccesfully scraped data for {} languages!".format(family.capitalize()))
