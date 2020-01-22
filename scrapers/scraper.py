@@ -34,12 +34,11 @@ def rmPrefix(word):
     return word[len("apertium-") :]
 
 
-def prepRepo(repo, quiet):
+def prepRepo(repo):
     """Adds repo if it doesn't exist, or updates it if does, and copies .mailmap to it"""
     if not REPOS_DIR.joinpath(repo).exists():
-        if not quiet:
-            print("Cloning {}...".format(repo), flush=True)
-            # Replaces the multi-line git clone status check with a sigle-line message
+        logging.getLogger("prepRepo").info("Cloning %s...", repo)
+        # Replaces the multi-line git clone status check with a single-line message
         subprocess.call(
             ["git", "clone", "--quiet", "https://github.com/apertium/{}".format(repo),],
             cwd=REPOS_DIR,
@@ -48,9 +47,17 @@ def prepRepo(repo, quiet):
         subprocess.call(
             ["git", "pull", "--force", "--quiet",], cwd=REPOS_DIR.joinpath(repo),
         )
-    shutil.copyfile(
-        SCRAPERS_DIR.joinpath(".mailmap"), REPOS_DIR.joinpath(repo, ".mailmap"),
-    )
+    try:
+        shutil.copyfile(
+            SCRAPERS_DIR.joinpath(".mailmap"), REPOS_DIR.joinpath(repo, ".mailmap"),
+        )
+    except FileNotFoundError:
+        # Better error message if a language wasn't found
+        raise Exception(
+            "Unable to clone {}. Please check if {} is a valid Apertium language and remove it from the json file if it isn't".format(
+                repo, rmPrefix(repo)
+            )
+        )
 
 
 def fileExt(repo):
@@ -66,7 +73,7 @@ def fileExt(repo):
     return "unknown"
 
 
-def monoHistory(language, quiet):
+def monoHistory(language):
     """Returns the history of a monolingual dictionary"""
     dirName = "apertium-{}".format(language)
     try:
@@ -78,7 +85,7 @@ def monoHistory(language, quiet):
             history = []
     except (FileNotFoundError, json.decoder.JSONDecodeError):
         history = []
-    prepRepo(dirName, quiet)
+    prepRepo(dirName)
     extension = fileExt(language)
     commits = (
         subprocess.check_output(
@@ -121,8 +128,8 @@ def monoHistory(language, quiet):
             try:
                 stems = countLexcStems(dataFile.text)
             except SystemExit:
-                logging.getLogger("monoHistory").warning(
-                    "Unable to count lexc stems for %s in commit %s",
+                logging.getLogger("monoHistory").debug(
+                    "DEBUG:monoHistory:Unable to count lexc stems for %s in commit %s",
                     language,
                     commitData["sha"],
                 )
@@ -130,8 +137,8 @@ def monoHistory(language, quiet):
         else:
             stems = countDixStems(fileURL, False)
             if stems == -1:
-                logging.getLogger("monoHistory").warning(
-                    "Unable to count dix stems for %s in commit %s",
+                logging.getLogger("monoHistory").debug(
+                    "DEBUG:monoHistory:Unable to count dix stems for %s in commit %s",
                     language,
                     commitData["sha"],
                 )
@@ -144,7 +151,7 @@ def monoHistory(language, quiet):
     return {"name": language, "history": history}
 
 
-def pairHistory(language, languages, packages, quiet):
+def pairHistory(language, languages, packages):
     """Returns the history of all pairs of a language"""
     langPackages = []
     for package in packages:
@@ -162,10 +169,9 @@ def pairHistory(language, languages, packages, quiet):
         ):  # This repo exists as srd-ita and ita-srd is empty
             continue
 
-        if not quiet:
-            print("Getting commits for {}...".format(dirName), flush=True)
+        logging.getLogger("pairHistory").info("Getting commits for %s...", dirName)
 
-        prepRepo(dirName, quiet)
+        prepRepo(dirName)
         dixName = (
             pairName if pairName != "tat-kir" else "tt-ky"
         )  # The tat-kir bidix is still named according to iso639-1 standards
@@ -219,8 +225,8 @@ def pairHistory(language, languages, packages, quiet):
                 )
                 stems = countDixStems(dixFile, True)
                 if stems == -1:
-                    logging.getLogger("pairHistory").warning(
-                        "Unable to count dix stems for %s in commit %s",
+                    logging.getLogger("pairHistory").debug(
+                        "DEBUG:pairHistory:Unable to count dix stems for %s in commit %s",
                         pairName,
                         commitData["sha"],
                     )
@@ -233,7 +239,7 @@ def pairHistory(language, languages, packages, quiet):
     return langPackages
 
 
-def monoData(packages, languages, langFamily, updatemailmap, quiet):
+def monoData(packages, languages, langFamily, updatemailmap):
     """Returns data for all monolingual dictionaries: state, stems, location and contributors"""
     data = []
     for package in packages:
@@ -245,7 +251,7 @@ def monoData(packages, languages, langFamily, updatemailmap, quiet):
 
         dirName = package["name"]
         language = rmPrefix(dirName)
-        prepRepo(dirName, quiet)
+        prepRepo(dirName)
         extension = fileExt(language)
         if extension == "lexc":
             fileType = extension
@@ -403,7 +409,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-q",
         "--quiet",
-        help="stop the script from printing status updates",
+        help="stop the script from logging status updates",
         action="store_true",
     )
     parser.add_argument(
@@ -417,10 +423,14 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if args.verbose:
-        logging.basicConfig(level=logging.INFO)
+    FORMAT = "%(message)s"  # Prevents the info about the logger level
+    if args.quiet:
+        logging.basicConfig(level=logging.CRITICAL, format=FORMAT)
+    elif args.verbose:
+        logging.basicConfig(level=logging.DEBUG, format=FORMAT)
     else:
-        logging.basicConfig(level=logging.CRITICAL)
+        logging.basicConfig(level=logging.INFO, format=FORMAT)
+
     # As this script already handles errors for the lexcccounter, disable logging for it:
     logging.getLogger("countStems").disabled = True
 
@@ -442,36 +452,30 @@ if __name__ == "__main__":
     pairsFile = open(
         JSON_DIR.joinpath("{}_pairData.json".format(family)), "w+", encoding="utf-8",
     )
-    if not args.quiet:
-        print(
-            "Scraping pair data for {} languages...".format(family.capitalize()),
-            flush=True,
-        )
+    logging.getLogger("").info(
+        "Scraping pair data for %s languages...", family.capitalize()
+    )
     json.dump(pairData(allPackages, langs), pairsFile, ensure_ascii=False)
     langsFile = open(
         JSON_DIR.joinpath("{}_transducers.json".format(family)), "w+", encoding="utf-8",
     )
-    if not args.quiet:
-        print(
-            "Scraping monolingual data for {} languages...".format(family.capitalize()),
-            flush=True,
-        )
+    logging.getLogger("").info(
+        "Scraping monolingual data for %s languages...", family.capitalize(),
+    )
     json.dump(
-        monoData(allPackages, langs, family, args.updatemailmap, args.quiet),
+        monoData(allPackages, langs, family, args.updatemailmap),
         langsFile,
         ensure_ascii=False,
     )
     if not args.shallow:
         for lang in langs:
             langHistory = []
-            if not args.quiet:
-                print(
-                    "Getting commits for apertium-{}...".format(lang), flush=True,
-                )
-            langHistory.append(monoHistory(lang, args.quiet))
-            langHistory.extend(pairHistory(lang, langs, allPackages, args.quiet))
+            logging.getLogger("").info("Getting commits for apertium-%s...", lang)
+            langHistory.append(monoHistory(lang))
+            langHistory.extend(pairHistory(lang, langs, allPackages))
             outputFile = open(
                 JSON_DIR.joinpath("{}.json".format(lang)), "w+", encoding="utf-8",
             )
             json.dump(langHistory, outputFile, ensure_ascii=False)
+    # Print, as this should be here even with quiet mode
     print("\nSuccesfully scraped data for {} languages!".format(family.capitalize()))
