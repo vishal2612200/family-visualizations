@@ -23,8 +23,6 @@ ROOT_DIR = SCRAPERS_DIR.parent
 JSON_DIR = ROOT_DIR.joinpath("json")
 REPOS_DIR = SCRAPERS_DIR.joinpath("git-repos")
 
-iso3to2 = json.load(open(SCRAPERS_DIR.joinpath("iso3to2.json"), "r"))
-
 pairLocations = ["incubator", "nursery", "staging", "trunk"]
 langLocations = ["languages", "incubator"]
 
@@ -77,7 +75,7 @@ def monoHistory(language):
     """Returns the history of a monolingual dictionary"""
     dirName = "apertium-{}".format(language)
     try:
-        oldFile = json.load(open(JSON_DIR.joinpath("{}.json".format(language)), "r"))
+        oldFile = json.load(open(JSON_DIR.joinpath("{}.json".format(language)), "r", encoding="utf-8"))
         for data in oldFile:
             if data["name"] == language:
                 history = data["history"]
@@ -92,37 +90,34 @@ def monoHistory(language):
             [
                 "git",
                 "log",
-                "--format=%H %aN %aI",
+                "--format=%H<>%aN<>%aI<>",
+                "--name-only",
                 "--follow",
                 "apertium-{0}.{0}.{1}".format(language, extension),
             ],
             cwd=REPOS_DIR.joinpath(dirName),
         )
         .decode("utf-8")
+        .replace("\n\n", "")
         .split("\n")
     )
 
     commits.pop()  # last line is always empty
     for commit in commits:
-        data = commit.split(" ")
+        data = commit.split("<>")
         commitData = {
             "sha": data[0],
-            "author": " ".join(data[1:-1]),
-            "date": data[-1],
+            "author": data[1],
+            "date": data[2],
         }
 
         if any(commitData["sha"] == cm["sha"] for cm in history):
             continue
 
-        fileURL = "https://raw.githubusercontent.com/apertium/apertium-{0}/{1}/apertium-{0}.{0}.{2}".format(
-            language, commitData["sha"], extension
+        fileURL = "https://raw.githubusercontent.com/apertium/apertium-{}/{}/{}".format(
+            language, commitData["sha"], data[3].strip()
         )
         dataFile = requests.get(fileURL)
-        if not dataFile:
-            fileURL = "https://raw.githubusercontent.com/apertium/apertium-{0}/{1}/apertium-{0}.{0}.{2}".format(
-                iso3to2[language], commitData["sha"], extension
-            )
-            dataFile = requests.get(fileURL)
 
         if extension == "lexc":
             try:
@@ -181,19 +176,21 @@ def pairHistory(language, languages, packages):
                 [
                     "git",
                     "log",
-                    "--format=%H %aN %aI",
+                    "--format=%H<>%aN<>%aI<>",
+                    "--name-only",
                     "--follow",
                     "apertium-{0}.{0}.dix".format(dixName),
                 ],
                 cwd=REPOS_DIR.joinpath(dirName),
             )
             .decode("utf-8")
+            .replace("\n\n", "")
             .split("\n")
         )
 
         try:
             oldFile = json.load(
-                open(JSON_DIR.joinpath("{}.json".format(language)), "r")
+                open(JSON_DIR.joinpath("{}.json".format(language)), "r", encoding="utf-8")
             )
             for data in oldFile:
                 if data["name"] == pairName:
@@ -205,32 +202,27 @@ def pairHistory(language, languages, packages):
 
         commits.pop()  # Last line is always empty
         for commit in commits:
-            commitData = {}
-            data = commit.split(" ")
-            commitData["sha"] = data[0]
-            commitData["author"] = " ".join(data[1:-1])
-            commitData["date"] = data[-1]
+            data = commit.split("<>")
+            commitData = {
+                "sha": data[0],
+                "author": data[1],
+                "date": data[2],
+            }
 
             if any(commitData["sha"] == cm["sha"] for cm in history):
                 continue
 
-            dixFile = "https://raw.githubusercontent.com/apertium/apertium-{0}/{1}/apertium-{0}.{0}.dix".format(
-                pairName, commitData["sha"]
+            dixFile = "https://raw.githubusercontent.com/apertium/apertium-{}/{}/{}".format(
+                pairName, commitData["sha"], data[3]
             )
             stems = countDixStems(dixFile, True)
             if stems == -1:
-                dixName = iso3to2[pairList[0]] + "-" + iso3to2[pairList[1]]
-                dixFile = "https://raw.githubusercontent.com/apertium/apertium-{0}/{2}/apertium-{1}.{1}.dix".format(
-                    pairName, dixName, commitData["sha"]
+                logging.getLogger("pairHistory").debug(
+                    "DEBUG:pairHistory:Unable to count dix stems for %s in commit %s",
+                    pairName,
+                    commitData["sha"],
                 )
-                stems = countDixStems(dixFile, True)
-                if stems == -1:
-                    logging.getLogger("pairHistory").debug(
-                        "DEBUG:pairHistory:Unable to count dix stems for %s in commit %s",
-                        pairName,
-                        commitData["sha"],
-                    )
-                    continue
+                continue
 
             commitData["stems"] = stems["stems"]
             history.append(commitData)
@@ -433,9 +425,11 @@ if __name__ == "__main__":
 
     # As this script already handles errors for the lexcccounter, disable logging for it:
     logging.getLogger("countStems").disabled = True
+    logging.getLogger("requests").setLevel(logging.CRITICAL)
+    logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 
     family = args.family.lower()
-    families = json.load(open(SCRAPERS_DIR.joinpath("families.json"), "r"))
+    families = json.load(open(SCRAPERS_DIR.joinpath("families.json"), "r"), encoding="utf-8")
     try:
         langs = families[family]
     except KeyError:
