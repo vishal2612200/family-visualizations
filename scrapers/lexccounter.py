@@ -71,10 +71,9 @@ def countStems(dictionary, uniqueOn='lemma+continuationLexicon'):
 
     entries = set()
     for validLexicon in validLexicons:
-        logging.info('In lexicon %s referenced from ROOT, found %s entries.' % (validLexicon, len(lexicons[validLexicon][1])))
+        logger.info('In lexicon %s referenced from ROOT, found %s entries.' % (validLexicon, len(lexicons[validLexicon][1])))
         entries.update(lexicons[validLexicon][1])
 
-    print('Unique entries: %s' % len(entries))
     return len(entries)
 
 if __name__ == '__main__':

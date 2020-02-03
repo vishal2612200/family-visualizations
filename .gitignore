@@ -1,0 +1,5 @@
+# Scraper generated files
+scrapers/git-repos/
+
+# Python
+scrapers/__pycache__/

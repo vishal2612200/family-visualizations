@@ -3,7 +3,7 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <title>Language Family Map</title>
-        <link href='http://fonts.googleapis.com/css?family=Rosario:700,400' rel='stylesheet' type='text/css'>
+        <link href='https://fonts.googleapis.com/css?family=Rosario:700,400' rel='stylesheet' type='text/css'>
         <style>
             body {
                 font-family: Rosario, Open Sans, Candara, Calibri, Segoe, "Segoe UI", Optima, Arial, sans-serif;
@@ -171,36 +171,12 @@
 
         <script type="text/javascript">
             var nativeNames = false,
-                svnRoot = "https://svn.code.sf.net/p/apertium/svn/",
-                svnViewRevisionRoot = "https://sourceforge.net/p/apertium/svn/";
+                githubRoot = "https://github.com/apertium/";
 
-            var pairs = [
-                {"langs": ["tur", "aze"], "location": "nursery", "stems": 8194},
-                {"langs": ["tuk", "tur"], "location": "nursery", "stems": 3387},
-                {"langs": ["tur", "uzb"], "location": "nursery", "stems": 1967},
-                {"langs": ["tur", "kir"], "location": "nursery", "stems": 7106},
-                {"langs": ["tur", "tat"], "location": "nursery", "stems": 213},
-                {"langs": ["chv", "tur"], "location": "incubator", "stems": 8172},
-                {"langs": ["kir", "uzb"], "location": "incubator", "stems": 17},
-                {"langs": ["kaz", "kir"], "location": "nursery", "stems": 7556},
-                {"langs": ["tat", "kir"], "location": "incubator", "stems": 10},
-                {"langs": ["chv", "tat"], "location": "incubator", "stems": 198},
-                {"langs": ["kaz", "tat"], "location": "trunk", "stems": 9919},
-                {"langs": ["nog", "kaz"], "location": "incubator", "stems": 9},
-                {"langs": ["tat", "bak"], "location": "nursery", "stems": 2941},
-                {"langs": ["kaz", "kaa"], "location": "incubator", "stems": 4978},
-                {"langs": ["kaz", "kum"], "location": "nursery", "stems": 511},
-                {"langs": ["kaz", "uig"], "location": "incubator", "stems": 2728},
-            ];
-
-            var externalPairs = [
-                {"langs": ["tur", "eng"], "location": "incubator", "stems": 171},
-                {"langs": ["kaz", "eng"], "location": "incubator", "stems": 7522},
-                {"langs": ["epo", "tur"], "location": "incubator", "stems": 1500},
-                {"langs": ["khk", "kaz"], "location": "incubator", "stems": 134},
-                {"langs": ["tat", "rus"], "location": "incubator", "stems": 5992},
-                {"langs": ["chv", "rus"], "location": "incubator", "stems": 75}
-            ];
+            var transducers, pairs;
+            d3.json("./json/turkic_pairData.json", function(error, data) {
+              pairs = data;
+            })
 
             var udhrText = {
                 "kaz": "Барлық адамдар тумысынан азат және қадір‐қасиеті мен кұқықтары тең болып дүниеге келеді. Адамдарға ақыл‐парасат, ар‐ождан берілген, сондықтан олар бір‐бірімен туыстық, бауырмалдық қарым‐қатынас жасаулары тиіс.",
@@ -217,26 +193,6 @@
                 "crh": "Bütün insanlar ür, sayğı ve uquqlar itibarı ile musaviy doğalar. Aqıl ve vicdanğa saipler ve bir-birlerine qarşı ağa-qardaşlıq fikirnen areket etmelidirler.",
                 "bak": "Барлыҡ кешеләр ирекле, дәрәжәләре һәм хоҡуҡтары тигеҙ булып тыуалар. Улар аҡыл һәм выждан эйәһе һәм бер-береһенә ҡарата ҡәрҙәшлек рухында хәрәкәт итергә тейештәр."
             };
-
-            var transducers = [
-                {"lang": "kaz", "state": "production", "stems": 14249, "coverage": 92.1, "location": "apertium-kaz (languages)", authors: "Ilnar, Jonathan, Fran, Nathan", contributors: [{"user":"aida27","value":144},{"user":"abdik","value":8},{"user":"jonorthwash","value":161},{"user":"spectre360","value":94},{"user":"selimcan","value":679},{"user":"aidana1","value":13},{"user":"unhammer","value":13},{"user":"zhenisbek","value":6},{"user":"inariksit","value":1},{"user":"mlforcada","value":2},{"user":"moshagen","value":1},{"user":"kantoro","value":28},{"user":"trondtr","value":3},{"user":"aizhan","value":1}]},
-                {"lang": "tat", "state": "production", "stems": 12086, "coverage": 91, "location": "apertium-tat (languages)", authors: "Ilnar, Fran, Jonathan, Röstäm", contributors: [{"user":"selimcan","value":672},{"user":"trondtr","value":2},{"user":"unhammer","value":14},{"user":"spectre360","value":36},{"user":"abdik","value":1},{"user":"jonorthwash","value":89},{"user":"aglimzan","value":4}]},
-                {"lang": "kir", "state": "working", "stems": 13775, "coverage": 90, "location": "apertium-kir (languages)", authors: "Jonathan, Mirlan, Fran, Qantörö", contributors: [{"user":"jonorthwash","value":276},{"user":"unhammer","value":11},{"user":"spectre360","value":88},{"user":"kantoro","value":50}]},
-                {"lang": "tur", "state": "working", "stems": 11417, "coverage": 87.3, "location": "apertium-tur (languages)", authors: "Fran, Gianluca, Jonathan", contributors: [{"user":"trondtr","value":1},{"user":"unhammer","value":6},{"user":"jonorthwash","value":206},{"user":"spectre360","value":386},{"user":"zfe","value":215},{"user":"aglimzan","value":4},{"user":"hectoralos","value":1},{"user":"cristipiticul","value":1},{"user":"yatezcan","value":1}]},
-                {"lang": "chv", "state": "development", "stems": 10276, "coverage": 85, "location": "apertium-chv (languages)", authors: "Hèctor", contributors: [{"user":"unhammer","value":12},{"user":"spectre360","value":31},{"user":"jonorthwash","value":4}]},
-                {"lang": "kum", "state": "development", "stems": 4895, "coverage": 90.2, "location": "apertium-kum (languages)", authors: "Fran, Jonathan", contributors: [{"user":"spectre360","value":133},{"user":"jonorthwash","value":78},{"user":"unhammer","value":10}]},
-                {"lang": "kaa", "state": "development", "stems": 5378, "coverage": 80.6, "location": "apertium-kaa (languages)", authors: "Beknazar, Fran, Jonathan", contributors: [{"user":"abdik","value":71},{"user":"spectre360","value":83},{"user":"jonorthwash","value":67},{"user":"unhammer","value":6}]},
-                {"lang": "uzb", "state": "development", "stems": 3957, "coverage": 82.9, "location": "apertium-uzb (languages)", authors: "", contributors: [{"user":"unhammer","value":10},{"user":"kantoro","value":4},{"user":"spectre360","value":22},{"user":"zfe","value":1}]},
-                {"lang": "bak", "state": "development", "stems": 2827, "coverage": 66, "location": "apertium-bak (languages)", authors: "Fran, Jonathan, Ilnar, Milli", contributors: [{"user":"unhammer","value":11},{"user":"spectre360","value":5}]},
-                {"lang": "nog", "state": "development", "stems": 1385, "coverage": 81.4, "location": "apertium-nog (languages)", authors: "Fran, Jonathan", contributors: [{"user":"unhammer","value":10},{"user":"spectre360","value":90},{"user":"jonorthwash","value":43}]},
-                {"lang": "tuk", "state": "development", "stems": 2988, "coverage": 70.7, "location": "apertium-tuk (languages)", authors: "Fran", contributors: [{"user":"unhammer","value":10},{"user":"spectre360","value":3}]},
-                {"lang": "uig", "state": "prototype", "stems": 1761, "coverage": 54.2, "location": "apertium-uig (incubator)", authors: "Jonathan, Märdan, Fran", contributors: [{"user":"unhammer","value":1},{"user":"jonorthwash","value":36},{"user":"spectre360","value":19}]},
-                {"lang": "crh", "state": "prototype", "stems": 681, "coverage": 46.7, "location": "apertium-crh (incubator)", authors: "Fran", contributors: [{"user":"spectre360","value":8}]},
-                {"lang": "sah", "state": "prototype", "stems": 806, "coverage": 35.9, "location": "apertium-sah (incubator)", authors: "Fran", contributors: [{"user":"spectre360","value":8}]},
-                {"lang": "tyv", "state": "prototype", "stems": 168, "coverage": 31.2, "location": "apertium-tyv (incubator)", authors: "Fran", contributors: [{"user":"spectre360","value":16}]},
-                {"lang": "kjh", "state": "prototype", "stems": 161, "coverage": 35.5, "location": "apertium-kjh (incubator)", authors: "Fran", contributors: [{"user":"spectre360","value":7}]},
-                {"lang": "aze", "state": "prototype", "stems": 11120, "coverage": 0, "location": "apertium-aze (incubator)", authors: "Gianluca", contributors: [{"user":"unhammer","value":5},{"user":"spectre360","value":5},{"user":"selimcan","value":1}]}
-            ];
 
             var langNames = {
                 "kaz": ["Kazakh", "қазақ тілі"],
@@ -621,7 +577,6 @@
 
                     function drawContributionsDonut(container, width, height, outerRadiusOffset, innerRadiusOffset, labelFontSize, centerTitleFontSize, contributionsFontSize, showNumbers, transition) {
                         var radius = Math.min(width, height) / 2;
-
                         var otherContributors = [];
                         var totalContributions = langData.contributors.reduce(function (prev, curr) { return curr.value + prev; }, 0),
                             otherValue = 0,
@@ -681,7 +636,7 @@
                             .text(function (d) { return d.data.user + (showNumbers ? " (" + d.data.value + ")" : ""); });
 
                         var splitLocation = langData.location.split(" "),
-                            svnLink = svnRoot + splitLocation[1].substring(1, splitLocation[1].length - 1) + "/" + splitLocation[0];
+                            svnLink = githubRoot + splitLocation[0];
 
                         var foreignObject = svg.append("foreignObject")
                             .attr("width", width)
@@ -842,6 +797,7 @@
                         d3.json("./json/" + langData.lang + ".json", function (error, modules) {
                             modules.forEach(function (module) {
                                 module.history.forEach(function (d) {
+                                    d.name = module.name;
                                     d.date = new Date(d.date);
                                     d.stems = +d.stems;
                                 });
@@ -920,13 +876,13 @@
 
                                         focus.transition().style("opacity", 1);
 
-                                        commitInfo.html(d.stems + " stems @ " + "r" + d.rev + (fullCommitInfo ? " by " + d.author + "<br>" + d.date.toUTCString() : ""))
+                                        commitInfo.html(d.stems + " stems by " + d.author + (fullCommitInfo ? "<br>" + d.date.toUTCString() : ""))
                                         commitInfo.style("display", "block").transition().style("opacity", 1);
                                     })
                                     .on("dblclick", function (d) {
                                         d3.event.preventDefault();
                                         d3.event.stopPropagation();
-                                        window.open(svnViewRevisionRoot + d.rev);
+                                        window.open(`https://github.com/apertium/apertium-${d.name}/commit/${d.sha}`);
                                         return false;
                                     });
 
@@ -1032,7 +988,10 @@
             }
 
             $(document).ready(function () {
-                createChart();
+                d3.json("./json/turkic_transducers.json", function(error, data) {
+                  transducers = data;
+                  createChart();
+                })
             });
 
             $(window).resize(function () {
