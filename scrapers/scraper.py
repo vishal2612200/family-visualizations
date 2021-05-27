@@ -312,7 +312,7 @@ def monoData(packages, languages, langFamily, updatemailmap):
         for contributor, count in authorCount.items():
             contributors.append({"user": contributor, "value": count})
 
-        wikiURL = "http://wiki.apertium.org/wiki/" + langFamily + "_languages"
+        wikiURL = "https://wiki.apertium.org/wiki/" + langFamily + "_languages"
         wikiData = requests.get(wikiURL).text
         rows = etree.fromstring(
             wikiData, parser=etree.XMLParser(encoding="utf-8")
